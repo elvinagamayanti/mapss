@@ -8,7 +8,7 @@ export default defineConfig({
   server: {
     proxy: {
       '/api': {
-        target: 'http://localhost:8888/maps_se', // MAMP default url path, falls back if customized in settings
+        target: 'http://localhost:/maps_se', // MAMP default url path, falls back if customized in settings
         changeOrigin: true,
       }
     }

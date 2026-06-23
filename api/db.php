@@ -17,12 +17,13 @@ $db_name = 'maps_se';
 
 // Multi-fallback database credentials matching MAMP (port 8889) and XAMPP (port 3306)
 $configs = [
-    // MAMP default (port 8889, root/root)
-    ['host' => '127.0.0.1', 'port' => '8889', 'user' => 'root', 'pass' => 'root'],
-    ['host' => 'localhost', 'port' => '8889', 'user' => 'root', 'pass' => 'root'],
+    
     // Standar / XAMPP (port 3306, root/no password)
     ['host' => '127.0.0.1', 'port' => '3306', 'user' => 'root', 'pass' => ''],
     ['host' => 'localhost', 'port' => '3306', 'user' => 'root', 'pass' => ''],
+    // MAMP default (port 8889, root/root)
+    ['host' => '127.0.0.1', 'port' => '8889', 'user' => 'root', 'pass' => 'root'],
+    ['host' => 'localhost', 'port' => '8889', 'user' => 'root', 'pass' => 'root'],
     // Standar dengan password (port 3306, root/root)
     ['host' => '127.0.0.1', 'port' => '3306', 'user' => 'root', 'pass' => 'root'],
     ['host' => 'localhost', 'port' => '3306', 'user' => 'root', 'pass' => 'root']
