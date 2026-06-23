@@ -12,6 +12,8 @@ if (!$inputData) {
 
 $idsubsls = $inputData['idsubsls'] ?? '';
 $nmsls = $inputData['nmsls'] ?? '';
+$ppl_name   = $inputData['ppl_name']  ?? '';  // Nama PPL (Pencacah) dari progressData
+$pml_name   = $inputData['pml_name']  ?? '';  // Nama PML (Pengawas) dari progressData
 $latitude = $inputData['latitude'] ?? null;
 $longitude = $inputData['longitude'] ?? null;
 $change_type = $inputData['change_type'] ?? '';
@@ -24,13 +26,15 @@ if (empty($idsubsls) || empty($nmsls) || empty($change_type)) {
 }
 
 try {
-    $sql = "INSERT INTO sls_changes (idsubsls, nmsls, latitude, longitude, change_type, notes) 
-            VALUES (:idsubsls, :nmsls, :latitude, :longitude, :change_type, :notes)";
+    $sql = "INSERT INTO sls_changes (idsubsls, nmsls, ppl_name, pml_name, latitude, longitude, change_type, notes) 
+            VALUES (:idsubsls, :nmsls, :ppl_name, :pml_name, :latitude, :longitude, :change_type, :notes)";
     
     $stmt = $conn->prepare($sql);
     $stmt->execute([
         ':idsubsls' => $idsubsls,
         ':nmsls' => $nmsls,
+        ':ppl_name' => $ppl_name,
+        ':pml_name' => $pml_name,
         ':latitude' => $latitude,
         ':longitude' => $longitude,
         ':change_type' => $change_type,

@@ -12,6 +12,7 @@ const CHANGE_TYPES = [
 export default function SlsChangeForm({ 
   feature, 
   userLocation, 
+  progressData,  
   onClose,
   onSuccess,
   showToast
@@ -23,6 +24,11 @@ export default function SlsChangeForm({
 
   if (!feature) return null;
   const props = feature.properties || {};
+
+  const idsubsls = props.idsubsls || '';
+  const slsProgress = (progressData && idsubsls) ? progressData[idsubsls] : null;
+  const pplName = slsProgress ? (slsProgress.real_name || slsProgress.username || '') : '';
+  const pmlName = slsProgress ? (slsProgress.pml_name || '') : '';
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -36,6 +42,8 @@ export default function SlsChangeForm({
       const payload = {
         idsubsls: props.idsubsls || '00',
         nmsls: props.nmsls || 'Luar Batas SLS',
+        ppl_name: pplName,
+        pml_name: pmlName,
         latitude: userLocation ? userLocation.latitude : 0,
         longitude: userLocation ? userLocation.longitude : 0,
         change_type: changeType,
@@ -86,6 +94,20 @@ export default function SlsChangeForm({
         <span style={styles.briefLabel}>SLS Terpilih:</span>
         <span style={styles.briefName}>{props.nmsls}</span>
         <span style={styles.briefId}>({props.idsubsls})</span>
+      </div>
+
+      <div style={styles.petugasBox}>
+        <User size={12} color="hsl(var(--color-primary))" style={{ marginRight: 6, flexShrink: 0 }} />
+        <div style={styles.petugasRows}>
+          <div style={styles.petugasRow}>
+            <span style={styles.petugasLabel}>PPL (Pencacah):</span>
+            <span style={styles.petugasValue}>{pplName || <em style={{ color: '#aaa' }}>—</em>}</span>
+          </div>
+          <div style={styles.petugasRow}>
+            <span style={styles.petugasLabel}>PML (Pengawas):</span>
+            <span style={styles.petugasValue}>{pmlName || <em style={{ color: '#aaa' }}>—</em>}</span>
+          </div>
+        </div>
       </div>
 
       {success ? (
@@ -203,6 +225,35 @@ const styles = {
     fontFamily: 'monospace',
     fontSize: '12px',
     color: 'hsl(var(--color-gray-text))',
+  },
+  petugasBox: {
+    display: 'flex',
+    alignItems: 'flex-start',
+    padding: '10px 12px',
+    borderRadius: '10px',
+    backgroundColor: 'rgba(52, 199, 89, 0.05)',
+    border: '1px solid rgba(52, 199, 89, 0.15)',
+    fontSize: '12px',
+  },
+  petugasRows: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '4px',
+    flex: 1,
+  },
+  petugasRow: {
+    display: 'flex',
+    gap: '6px',
+    alignItems: 'center',
+  },
+  petugasLabel: {
+    color: 'hsl(var(--color-gray-text))',
+    fontWeight: 500,
+    minWidth: '110px',
+  },
+  petugasValue: {
+    fontWeight: 600,
+    color: 'hsl(var(--color-dark))',
   },
   form: {
     display: 'flex',

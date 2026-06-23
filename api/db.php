@@ -81,6 +81,8 @@ try {
             id INT AUTO_INCREMENT PRIMARY KEY,
             idsubsls VARCHAR(50) NOT NULL,
             nmsls VARCHAR(150) NOT NULL,
+            ppl_name VARCHAR(150) NOT NULL,
+            pml_name VARCHAR(150) NOT NULL,
             latitude DOUBLE NOT NULL,
             longitude DOUBLE NOT NULL,
             change_type VARCHAR(100) NOT NULL, -- 'Perubahan Batas SLS', 'Pemekaran SLS', 'Penggabungan SLS', 'Pergantian Tipe'

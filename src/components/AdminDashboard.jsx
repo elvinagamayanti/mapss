@@ -511,6 +511,8 @@ export default function AdminDashboard({ isOpen, onClose, geojson, showToast }) 
                           <th style={styles.th}>SLS / Sub-SLS</th>
                           <th style={styles.th}>Tipe Perubahan</th>
                           <th style={styles.th}>Catatan / Deskripsi</th>
+                          <th style={styles.th}>PPL (Pencacah)</th>
+                          <th style={styles.th}>PML (Pengawas)</th>
                           <th style={styles.th}>Geotag Lokasi</th>
                           <th style={styles.th}>Tanggal Lapor</th>
                           {isAdminAuthenticated && <th style={styles.th}>Aksi Admin</th>}
@@ -536,6 +538,12 @@ export default function AdminDashboard({ isOpen, onClose, geojson, showToast }) 
                               </span>
                             </td>
                             <td style={{ ...styles.td, ...styles.tdNotes }}>{item.notes}</td>
+                            <td style={styles.td}>
+                              <span style={styles.petugasCellName}>{item.ppl_name || <span style={styles.petugasEmpty}>—</span>}</span>
+                            </td>
+                            <td style={styles.td}>
+                              <span style={styles.petugasCellName}>{item.pml_name || <span style={styles.petugasEmpty}>—</span>}</span>
+                            </td>
                             <td style={styles.td}>
                               <div style={styles.coordLink}>
                                 <MapPin size={12} style={{ marginRight: 4, color: 'hsl(var(--color-primary))' }} />
@@ -1072,6 +1080,15 @@ const styles = {
     alignItems: 'center',
     fontSize: '12px',
     color: 'hsl(var(--color-gray-text))',
+  },
+  petugasCellName: {
+    fontSize: '12px',
+    fontWeight: 500,
+    color: 'hsl(var(--color-dark))',
+  },
+  petugasEmpty: {
+    color: '#bbb',
+    fontStyle: 'italic',
   },
   typeBadge: {
     fontSize: '11px',

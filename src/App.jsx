@@ -549,6 +549,7 @@ export default function App() {
           <SlsChangeForm
             feature={activePanelSls}
             userLocation={userLocation}
+            progressData={progressData}
             onClose={() => {
               setShowChangeForm(false);
               setActivePanelSls(null);
