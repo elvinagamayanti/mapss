@@ -36,55 +36,29 @@ export default function SlsDetail({ feature, isUserLocation, onClose, onReportCh
               backgroundColor: isUserLocation ? 'rgba(255, 102, 0, 0.12)' : 'rgba(0,0,0,0.05)',
               color: isUserLocation ? 'hsl(var(--color-primary))' : 'hsl(var(--color-gray-text))'
             }}>
-              {isUserLocation ? 'Posisi Anda di Sini' : 'Dipilih dari Peta'}
+              {isUserLocation ? 'Lokasi Anda' : 'SLS Dipilih'}
             </span>
           </div>
         </div>
-        {onClose && (
-          <button onClick={onClose} style={styles.closeBtn}>
-            <X size={16} />
-          </button>
-        )}
+        <button type="button" onClick={onClose} style={styles.closeBtn}>
+          <X size={16} />
+        </button>
       </div>
 
       <div style={styles.body}>
-        <div style={styles.sectionTitle}>
-          <MapPin size={12} style={{ marginRight: 4 }} /> Wilayah Administratif
-        </div>
-        
-        <div style={styles.grid}>
-          <div style={styles.gridItem}>
-            <span style={styles.label}>Provinsi</span>
-            <span style={styles.value}>{props.nmprov || '-'}</span>
-          </div>
-          <div style={styles.gridItem}>
-            <span style={styles.label}>Kabupaten/Kota</span>
-            <span style={styles.value}>{props.nmkab || '-'}</span>
-          </div>
-          <div style={styles.gridItem}>
-            <span style={styles.label}>Kecamatan</span>
-            <span style={styles.value}>{props.nmkec || '-'}</span>
-          </div>
-          <div style={styles.gridItem}>
-            <span style={styles.label}>Desa/Kelurahan</span>
-            <span style={styles.value}>{props.nmdesa || '-'}</span>
-          </div>
-        </div>
-
-        <div style={{ ...styles.divider }} />
-
+        {/* Progress info block (injected from parent) */}
         {progressInfo && (() => {
           const total = parseInt(progressInfo.totalRegion || 0, 10);
           const open = parseInt(progressInfo.OPEN || 0, 10);
           const draft = parseInt(progressInfo.DRAFT || 0, 10);
           const completed = total - open - draft;
           const pct = total > 0 ? (completed / total) * 100 : 0;
-          const isDone = pct === 100;
+          const isDone = total > 0 && completed === total;
 
           return (
             <>
               <div style={styles.sectionTitle}>
-                <CheckCircle2 size={12} style={{ marginRight: 4, color: isDone ? '#34c759' : 'hsl(var(--color-primary))' }} /> 
+                <MapPin size={12} style={{ marginRight: 4, color: isDone ? '#34c759' : 'hsl(var(--color-primary))' }} /> 
                 Progres Pencacahan ({pct.toFixed(0)}%)
               </div>
 
@@ -198,9 +172,10 @@ export default function SlsDetail({ feature, isUserLocation, onClose, onReportCh
         {onReportChange && (
           <>
             <div style={styles.divider} />
-            <button 
-              onClick={() => onReportChange(feature)} 
-              className="btn-primary" 
+            <button
+              type="button"
+              onClick={() => onReportChange(feature)}
+              className="btn-primary"
               style={styles.changeBtn}
             >
               <FileEdit size={14} style={{ marginRight: 6 }} /> Laporkan Perubahan SLS

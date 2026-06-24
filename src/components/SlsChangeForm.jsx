@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import GlassPanel from './GlassPanel';
-import { AlertTriangle, Send, Check, X, FileEdit } from 'lucide-react';
+import { AlertTriangle, Send, Check, X, FileEdit, User } from 'lucide-react';
 
 const CHANGE_TYPES = [
   'Perubahan Batas SLS',
@@ -12,7 +12,7 @@ const CHANGE_TYPES = [
 export default function SlsChangeForm({ 
   feature, 
   userLocation, 
-  progressData,  
+  progressData,   // <-- prop baru: lookup progressData dari App.jsx
   onClose,
   onSuccess,
   showToast
@@ -25,6 +25,7 @@ export default function SlsChangeForm({
   if (!feature) return null;
   const props = feature.properties || {};
 
+  // Ambil info PPL & PML dari progressData berdasarkan idsubsls SLS yang dipilih
   const idsubsls = props.idsubsls || '';
   const slsProgress = (progressData && idsubsls) ? progressData[idsubsls] : null;
   const pplName = slsProgress ? (slsProgress.real_name || slsProgress.username || '') : '';
@@ -40,21 +41,19 @@ export default function SlsChangeForm({
       const endpoint = `${apiBaseUrl}/save_change.php`;
 
       const payload = {
-        idsubsls: props.idsubsls || '00',
-        nmsls: props.nmsls || 'Luar Batas SLS',
-        ppl_name: pplName,
-        pml_name: pmlName,
-        latitude: userLocation ? userLocation.latitude : 0,
-        longitude: userLocation ? userLocation.longitude : 0,
+        idsubsls:    props.idsubsls || '00',
+        nmsls:       props.nmsls || 'Luar Batas SLS',
+        latitude:    userLocation ? userLocation.latitude  : 0,
+        longitude:   userLocation ? userLocation.longitude : 0,
         change_type: changeType,
-        notes: notes.trim()
+        notes:       notes.trim(),
+        ppl_name:    pplName,   // otomatis dari progressData
+        pml_name:    pmlName,   // otomatis dari progressData
       };
 
       const res = await fetch(endpoint, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
       });
 
@@ -96,6 +95,7 @@ export default function SlsChangeForm({
         <span style={styles.briefId}>({props.idsubsls})</span>
       </div>
 
+      {/* Petugas info — otomatis dari data, tidak perlu diisi manual */}
       <div style={styles.petugasBox}>
         <User size={12} color="hsl(var(--color-primary))" style={{ marginRight: 6, flexShrink: 0 }} />
         <div style={styles.petugasRows}>
@@ -147,7 +147,9 @@ export default function SlsChangeForm({
           <div style={styles.locationTag}>
             <AlertTriangle size={12} color="hsl(var(--color-primary))" style={{ marginRight: 6 }} />
             <span>
-              Koordinat Geotag: {userLocation ? `${userLocation.latitude.toFixed(6)}, ${userLocation.longitude.toFixed(6)}` : 'GPS tidak aktif'}
+              Koordinat Geotag: {userLocation
+                ? `${userLocation.latitude.toFixed(6)}, ${userLocation.longitude.toFixed(6)}`
+                : 'GPS tidak aktif'}
             </span>
           </div>
 
