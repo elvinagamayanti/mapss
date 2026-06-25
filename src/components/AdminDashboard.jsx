@@ -14,8 +14,22 @@ import {
   Download,
   Eye,
   Lock,
-  Unlock
+  Unlock,
+  ChevronRight,
+  User,
+  StickyNote
 } from 'lucide-react';
+
+// Hook: deteksi lebar layar
+function useWindowWidth() {
+  const [width, setWidth] = useState(() => window.innerWidth);
+  useEffect(() => {
+    const handler = () => setWidth(window.innerWidth);
+    window.addEventListener('resize', handler);
+    return () => window.removeEventListener('resize', handler);
+  }, []);
+  return width;
+}
 
 export default function AdminDashboard({ isOpen, onClose, geojson, showToast }) {
   const [activeTab, setActiveTab] = useState('photos'); // 'photos' or 'changes'
@@ -41,6 +55,13 @@ export default function AdminDashboard({ isOpen, onClose, geojson, showToast }) 
   // Photo filters
   const [categoryFilter, setCategoryFilter] = useState('All');
   const [desaFilter, setDesaFilter] = useState('All');
+
+  // Detail modal for change items (mobile)
+  const [selectedChange, setSelectedChange] = useState(null);
+
+  // Responsive flag
+  const windowWidth = useWindowWidth();
+  const isMobile = windowWidth <= 640;
 
   // Map photo ID SLS to Village names (desa) using geojson properties
   const resolvedPhotos = useMemo(() => {
@@ -274,7 +295,8 @@ export default function AdminDashboard({ isOpen, onClose, geojson, showToast }) 
   const getApiUrl = (relativePath) => {
     const apiBaseUrl = localStorage.getItem('maps_api_url') || 'api';
     // If the path starts with api/, we strip it if apiBaseUrl already includes api
-    const cleanPath = relativePath.startsWith('api/') ? relativePath.replace('api/', '') : relativePath;
+    const cleanPath = relativePath.startsWith('api/') ?
+      relativePath.replace('api/', '') : relativePath;
     return `${apiBaseUrl}/${cleanPath}`;
   };
 
@@ -302,7 +324,7 @@ export default function AdminDashboard({ isOpen, onClose, geojson, showToast }) 
                 className="btn-primary" 
                 style={{ ...styles.headerBtn, backgroundColor: '#34c759', color: '#fff', boxShadow: 'none' }}
               >
-                <Unlock size={14} style={{ marginRight: 6 }} /> Keluar Admin
+                <Unlock size={14} style={{ marginRight: 6 }} /> {!isMobile && 'Keluar Admin'}
               </button>
             ) : (
               <button 
@@ -310,12 +332,12 @@ export default function AdminDashboard({ isOpen, onClose, geojson, showToast }) 
                 className="btn-secondary" 
                 style={styles.headerBtn}
               >
-                <Lock size={14} style={{ marginRight: 6 }} /> Mode Admin
+                <Lock size={14} style={{ marginRight: 6 }} /> {!isMobile && 'Mode Admin'}
               </button>
             )}
             
             <button onClick={fetchData} className="btn-secondary" style={styles.headerBtn} disabled={loading}>
-              <RefreshCw size={16} className={loading ? 'pulse-location' : ''} /> Segarkan
+              <RefreshCw size={16} className={loading ? 'pulse-location' : ''} /> {!isMobile && ' Segarkan'}
             </button>
             <button onClick={onClose} style={styles.closeBtn}>
               <X size={24} />
@@ -492,7 +514,7 @@ export default function AdminDashboard({ isOpen, onClose, geojson, showToast }) 
                           </div>
                         </div>
                       </GlassPanel>
-                    ))}
+                      ))}
                     </div>
                     {filteredPhotos.length === 0 && (
                       <div style={styles.emptyState}>Tidak ada foto yang cocok dengan filter terpilih.</div>
@@ -510,17 +532,24 @@ export default function AdminDashboard({ isOpen, onClose, geojson, showToast }) 
                         <tr>
                           <th style={styles.th}>SLS / Sub-SLS</th>
                           <th style={styles.th}>Tipe Perubahan</th>
-                          <th style={styles.th}>Catatan / Deskripsi</th>
-                          <th style={styles.th}>PPL (Pencacah)</th>
-                          <th style={styles.th}>PML (Pengawas)</th>
-                          <th style={styles.th}>Geotag Lokasi</th>
+                          {!isMobile && <th style={styles.th}>Catatan / Deskripsi</th>}
+                          {!isMobile && <th style={styles.th}>PPL (Pencacah)</th>}
+                          {!isMobile && <th style={styles.th}>PML (Pengawas)</th>}
+                          {!isMobile && <th style={styles.th}>Geotag Lokasi</th>}
                           <th style={styles.th}>Tanggal Lapor</th>
                           {isAdminAuthenticated && <th style={styles.th}>Aksi Admin</th>}
                         </tr>
                       </thead>
                       <tbody>
                         {data.changes.map((item) => (
-                          <tr key={item.id} style={styles.tr}>
+                          <tr
+                            key={item.id}
+                            style={{
+                              ...styles.tr,
+                              ...(isMobile ? { cursor: 'pointer' } : {})
+                            }}
+                            onClick={isMobile ? () => setSelectedChange(item) : undefined}
+                          >
                             <td style={styles.td}>
                               <div style={styles.slsCell}>
                                 <span style={styles.slsCellName}>{item.nmsls}</span>
@@ -537,30 +566,47 @@ export default function AdminDashboard({ isOpen, onClose, geojson, showToast }) 
                                 {item.change_type}
                               </span>
                             </td>
-                            <td style={{ ...styles.td, ...styles.tdNotes }}>{item.notes}</td>
+                            {!isMobile && <td style={{ ...styles.td, ...styles.tdNotes }}>{item.notes}</td>}
+                            {!isMobile && (
+                              <td style={styles.td}>
+                                <span style={styles.petugasCellName}>{item.ppl_name || <span style={styles.petugasEmpty}>—</span>}</span>
+                              </td>
+                            )}
+                            {!isMobile && (
+                              <td style={styles.td}>
+                                <span style={styles.petugasCellName}>{item.pml_name || <span style={styles.petugasEmpty}>—</span>}</span>
+                              </td>
+                            )}
+                            {!isMobile && (
+                              <td style={styles.td}>
+                                <div style={styles.coordLink}>
+                                  <MapPin size={12} style={{ marginRight: 4, color: 'hsl(var(--color-primary))' }} />
+                                  <span>{item.latitude.toFixed(5)}, {item.longitude.toFixed(5)}</span>
+                                </div>
+                              </td>
+                            )}
                             <td style={styles.td}>
-                              <span style={styles.petugasCellName}>{item.ppl_name || <span style={styles.petugasEmpty}>—</span>}</span>
-                            </td>
-                            <td style={styles.td}>
-                              <span style={styles.petugasCellName}>{item.pml_name || <span style={styles.petugasEmpty}>—</span>}</span>
-                            </td>
-                            <td style={styles.td}>
-                              <div style={styles.coordLink}>
-                                <MapPin size={12} style={{ marginRight: 4, color: 'hsl(var(--color-primary))' }} />
-                                <span>{item.latitude.toFixed(5)}, {item.longitude.toFixed(5)}</span>
-                              </div>
-                            </td>
-                            <td style={styles.td}>
-                              <div style={styles.dateCell}>
-                                <Calendar size={12} style={{ marginRight: 4, color: '#888' }} />
-                                <span>{formatDate(item.created_at)}</span>
-                              </div>
+                              {isMobile ? (
+                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '6px' }}>
+                                  <div style={styles.dateCell}>
+                                    <Calendar size={12} style={{ marginRight: 4, color: '#888' }} />
+                                    <span>{formatDate(item.created_at)}</span>
+                                  </div>
+                                  <ChevronRight size={14} color="hsl(var(--color-gray-text))" style={{ flexShrink: 0 }} />
+                                </div>
+                              ) : (
+                                <div style={styles.dateCell}>
+                                  <Calendar size={12} style={{ marginRight: 4, color: '#888' }} />
+                                  <span>{formatDate(item.created_at)}</span>
+                                </div>
+                              )}
                             </td>
                             {isAdminAuthenticated && (
                               <td style={styles.td}>
                                 <div style={{ display: 'flex', gap: '6px' }}>
                                   <button 
-                                    onClick={() => {
+                                    onClick={(e) => {
+                                      e.stopPropagation();
                                       setEditingChange(item);
                                       setEditChangeType(item.change_type);
                                       setEditChangeNotes(item.notes || '');
@@ -570,7 +616,10 @@ export default function AdminDashboard({ isOpen, onClose, geojson, showToast }) 
                                     Edit
                                   </button>
                                   <button 
-                                    onClick={() => handleDeleteChange(item.id)}
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleDeleteChange(item.id);
+                                    }}
                                     style={{ ...styles.tableAdminBtn, color: '#ff3b30', backgroundColor: 'rgba(255,59,48,0.08)' }}
                                   >
                                     Hapus
@@ -718,6 +767,102 @@ export default function AdminDashboard({ isOpen, onClose, geojson, showToast }) 
                 Simpan
               </button>
             </div>
+          </GlassPanel>
+        </div>
+      )}
+
+      {/* CHANGE DETAIL MODAL (mobile) */}
+      {selectedChange && (
+        <div style={styles.editDialogOverlay} onClick={() => setSelectedChange(null)}>
+          <GlassPanel style={styles.changeDetailContainer} className="animate-fade-in" onClick={(e) => e.stopPropagation()}>
+            {/* Header modal */}
+            <div style={styles.changeDetailHeader}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', minWidth: 0 }}>
+                <span style={{
+                  ...styles.typeBadge,
+                  ...(selectedChange.change_type === 'Pemekaran SLS' ? styles.badgeRed :
+                      selectedChange.change_type === 'Penggabungan SLS' ? styles.badgeBlue :
+                      selectedChange.change_type === 'Pergantian Tipe' ? styles.badgeGreen : styles.badgeOrange),
+                  flexShrink: 0,
+                }}>
+                  {selectedChange.change_type}
+                </span>
+              </div>
+              <button onClick={() => setSelectedChange(null)} style={styles.closeBtn}>
+                <X size={20} />
+              </button>
+            </div>
+
+            {/* Nama & kode SLS */}
+            <div style={styles.changeDetailSection}>
+              <span style={styles.changeDetailSectionLabel}>SLS / Sub-SLS</span>
+              <span style={styles.slsCellName}>{selectedChange.nmsls}</span>
+              <span style={styles.slsCellCode}>{selectedChange.idsubsls}</span>
+            </div>
+
+            {/* Catatan */}
+            {selectedChange.notes ? (
+              <div style={styles.changeDetailSection}>
+                <span style={styles.changeDetailSectionLabel}>Catatan / Deskripsi</span>
+                <p style={styles.changeDetailNotes}>{selectedChange.notes}</p>
+              </div>
+            ) : null}
+
+            {/* Petugas */}
+            <div style={styles.changeDetailRow}>
+              <div style={{ ...styles.changeDetailSection, flex: 1 }}>
+                <span style={styles.changeDetailSectionLabel}>PPL (Pencacah)</span>
+                <span style={styles.petugasCellName}>{selectedChange.ppl_name || <span style={styles.petugasEmpty}>—</span>}</span>
+              </div>
+              <div style={{ ...styles.changeDetailSection, flex: 1 }}>
+                <span style={styles.changeDetailSectionLabel}>PML (Pengawas)</span>
+                <span style={styles.petugasCellName}>{selectedChange.pml_name || <span style={styles.petugasEmpty}>—</span>}</span>
+              </div>
+            </div>
+
+            {/* Koordinat */}
+            <div style={styles.changeDetailSection}>
+              <span style={styles.changeDetailSectionLabel}>Geotag Lokasi</span>
+              <div style={styles.coordLink}>
+                <MapPin size={13} style={{ marginRight: 5, color: 'hsl(var(--color-primary))', flexShrink: 0 }} />
+                <span>{selectedChange.latitude.toFixed(6)}, {selectedChange.longitude.toFixed(6)}</span>
+              </div>
+            </div>
+
+            {/* Tanggal */}
+            <div style={styles.changeDetailSection}>
+              <span style={styles.changeDetailSectionLabel}>Tanggal Lapor</span>
+              <div style={styles.dateCell}>
+                <Calendar size={13} style={{ marginRight: 5, color: '#888' }} />
+                <span>{formatDate(selectedChange.created_at)}</span>
+              </div>
+            </div>
+
+            {/* Admin actions */}
+            {isAdminAuthenticated && (
+              <div style={{ display: 'flex', gap: '10px', marginTop: '4px' }}>
+                <button
+                  onClick={() => {
+                    setSelectedChange(null);
+                    setEditingChange(selectedChange);
+                    setEditChangeType(selectedChange.change_type);
+                    setEditChangeNotes(selectedChange.notes || '');
+                  }}
+                  style={{ ...styles.tableAdminBtn, flex: 1, padding: '10px', fontSize: '13px', textAlign: 'center' }}
+                >
+                  Edit
+                </button>
+                <button
+                  onClick={() => {
+                    setSelectedChange(null);
+                    handleDeleteChange(selectedChange.id);
+                  }}
+                  style={{ ...styles.tableAdminBtn, flex: 1, padding: '10px', fontSize: '13px', textAlign: 'center', color: '#ff3b30', backgroundColor: 'rgba(255,59,48,0.08)' }}
+                >
+                  Hapus
+                </button>
+              </div>
+            )}
           </GlassPanel>
         </div>
       )}
@@ -1325,5 +1470,48 @@ const styles = {
     display: 'flex',
     alignItems: 'center',
     marginBottom: '4px',
-  }
+  },
+  // Change detail modal styles
+  changeDetailContainer: {
+    width: '100%',
+    maxWidth: '420px',
+    padding: '20px',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '14px',
+    border: '1px solid rgba(255,255,255,0.6)',
+  },
+  changeDetailHeader: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: '10px',
+  },
+  changeDetailSection: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '4px',
+    padding: '10px 12px',
+    backgroundColor: '#ffffff',
+    borderRadius: '10px',
+    border: '1px solid rgba(0,0,0,0.06)',
+  },
+  changeDetailRow: {
+    display: 'flex',
+    gap: '10px',
+  },
+  changeDetailSectionLabel: {
+    fontSize: '10px',
+    fontWeight: 700,
+    color: 'hsl(var(--color-gray-text))',
+    textTransform: 'uppercase',
+    letterSpacing: '0.05em',
+    marginBottom: '2px',
+  },
+  changeDetailNotes: {
+    fontSize: '13px',
+    color: 'hsl(var(--color-dark))',
+    lineHeight: '1.5',
+    margin: 0,
+  },
 };
