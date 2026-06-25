@@ -440,3 +440,45 @@ body {
     font-size: 13px;
   }
 }
+
+/* ============================================================
+   LABEL NAMA SLS DI PETA
+   Tambahkan CSS ini ke file src/index.css (atau App.css)
+   di bagian paling bawah file.
+   ============================================================ */
+
+/* Container tooltip label SLS */
+.leaflet-tooltip.sls-label {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  margin: 0 !important;
+}
+
+/* Teks label nama SLS */
+.sls-label {
+  color: #1a1a2e;
+  font-size: 9px;
+  font-weight: 700;
+  font-family: 'Outfit', Arial, sans-serif;
+  white-space: nowrap;
+  text-align: center;
+  pointer-events: none !important;
+  line-height: 1.2;
+  /* Text shadow putih agar terbaca di atas warna apapun */
+  text-shadow:
+    -1px -1px 0 rgba(255, 255, 255, 0.95),
+     1px -1px 0 rgba(255, 255, 255, 0.95),
+    -1px  1px 0 rgba(255, 255, 255, 0.95),
+     1px  1px 0 rgba(255, 255, 255, 0.95),
+     0px -1px 0 rgba(255, 255, 255, 0.95),
+     0px  1px 0 rgba(255, 255, 255, 0.95),
+    -1px  0px 0 rgba(255, 255, 255, 0.95),
+     1px  0px 0 rgba(255, 255, 255, 0.95);
+}
+
+/* Hapus panah/segitiga default tooltip Leaflet */
+.sls-label::before {
+  display: none !important;
+}

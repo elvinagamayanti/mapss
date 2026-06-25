@@ -19,6 +19,9 @@ const TILE_PROVIDERS = {
   }
 };
 
+// Zoom level minimum untuk label SLS tampil
+const LABEL_MIN_ZOOM = 14;
+
 export default function MapContainer({
   theme = 'light',
   geojson,
@@ -33,7 +36,7 @@ export default function MapContainer({
   const mapInstanceRef = useRef(null);
   const tileLayerRef = useRef(null);
   const geojsonLayerRef = useRef(null);
-  
+
   const userMarkerRef = useRef(null);
   const userAccuracyCircleRef = useRef(null);
 
@@ -102,7 +105,7 @@ export default function MapContainer({
     const map = L.map(mapContainerRef.current, {
       center: defaultCenter,
       zoom: defaultZoom,
-      zoomControl: false, // We will put it in a nicer spot or use standard
+      zoomControl: false,
     });
 
     // Add zoom control at bottom-right for clean Apple-like UI
@@ -193,10 +196,46 @@ export default function MapContainer({
               geojsonLayer.resetStyle(layer);
             }
           });
+
+          // ── LABEL NAMA SLS ──────────────────────────────────────────
+          // Bind tooltip permanent di tengah polygon (hanya untuk SLS yang visible)
+          const nmsls = feature.properties.nmsls || '';
+          const isVisible = !filteredSlsIds || filteredSlsIds.has(feature.properties.idsubsls);
+
+          if (nmsls && isVisible) {
+            layer.bindTooltip(nmsls, {
+              permanent: true,
+              direction: 'center',
+              className: 'sls-label',
+              opacity: 1,
+            });
+          }
+          // ────────────────────────────────────────────────────────────
         }
       }).addTo(map);
 
       geojsonLayerRef.current = geojsonLayer;
+
+      // ── KONTROL VISIBILITAS LABEL BERDASARKAN ZOOM ──────────────────
+      const updateLabelVisibility = () => {
+        const zoom = map.getZoom();
+        geojsonLayer.eachLayer((layer) => {
+          const tooltip = layer.getTooltip();
+          if (!tooltip) return;
+          const tooltipEl = tooltip.getElement();
+          if (tooltipEl) {
+            tooltipEl.style.display = zoom >= LABEL_MIN_ZOOM ? '' : 'none';
+          }
+        });
+      };
+
+      // Pasang event listener zoom
+      map.on('zoomend', updateLabelVisibility);
+
+      // Cek visibilitas saat pertama kali layer dimuat
+      // Sedikit delay untuk memastikan tooltip sudah di-render ke DOM
+      setTimeout(updateLabelVisibility, 100);
+      // ────────────────────────────────────────────────────────────────
 
       // Fit map bounds to the geojson layer
       const bounds = geojsonLayer.getBounds();
