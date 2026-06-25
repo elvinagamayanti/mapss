@@ -40,6 +40,13 @@ export default function MapContainer({
   const userMarkerRef = useRef(null);
   const userAccuracyCircleRef = useRef(null);
 
+  // Ref untuk nyimpan filteredSlsIds terbaru — supaya closure zoomend
+  // selalu baca nilai yang current, bukan snapshot saat geojson pertama render
+  const filteredSlsIdsRef = useRef(filteredSlsIds);
+  useEffect(() => {
+    filteredSlsIdsRef.current = filteredSlsIds;
+  }, [filteredSlsIds]);
+
   const [loading, setLoading] = useState(true);
 
   // Helper to determine feature styles
@@ -198,11 +205,10 @@ export default function MapContainer({
           });
 
           // ── LABEL NAMA SLS ──────────────────────────────────────────
-          // Bind tooltip permanent di tengah polygon (hanya untuk SLS yang visible)
+          // Bind tooltip ke SEMUA SLS — visibilitas dikontrol dinamis
+          // via useEffect filteredSlsIds di bawah
           const nmsls = feature.properties.nmsls || '';
-          const isVisible = !filteredSlsIds || filteredSlsIds.has(feature.properties.idsubsls);
-
-          if (nmsls && isVisible) {
+          if (nmsls) {
             layer.bindTooltip(nmsls, {
               permanent: true,
               direction: 'center',
@@ -219,13 +225,20 @@ export default function MapContainer({
       // ── KONTROL VISIBILITAS LABEL BERDASARKAN ZOOM ──────────────────
       const updateLabelVisibility = () => {
         const zoom = map.getZoom();
+        // Baca dari ref, bukan closure — agar selalu dapat filteredSlsIds terbaru
+        const currentFilter = filteredSlsIdsRef.current;
+
         geojsonLayer.eachLayer((layer) => {
           const tooltip = layer.getTooltip();
           if (!tooltip) return;
           const tooltipEl = tooltip.getElement();
-          if (tooltipEl) {
-            tooltipEl.style.display = zoom >= LABEL_MIN_ZOOM ? '' : 'none';
-          }
+          if (!tooltipEl) return;
+
+          const idsubsls = layer.feature?.properties?.idsubsls;
+          const isInFilter = !currentFilter || currentFilter.has(idsubsls);
+
+          // Label tampil hanya jika: zoom cukup DAN SLS masuk filter aktif
+          tooltipEl.style.display = (zoom >= LABEL_MIN_ZOOM && isInFilter) ? '' : 'none';
         });
       };
 
@@ -271,6 +284,28 @@ export default function MapContainer({
       }
     });
   }, [selectedSls, filteredSlsIds, progressData]);
+
+  // ── SYNC VISIBILITAS LABEL SAAT FILTER BERUBAH ──────────────────────
+  // useEffect terpisah agar label langsung update ketika search/filter aktif
+  useEffect(() => {
+    const map = mapInstanceRef.current;
+    if (!map || !geojsonLayerRef.current) return;
+
+    const zoom = map.getZoom();
+
+    geojsonLayerRef.current.eachLayer((layer) => {
+      const tooltip = layer.getTooltip();
+      if (!tooltip) return;
+      const tooltipEl = tooltip.getElement();
+      if (!tooltipEl) return;
+
+      const idsubsls = layer.feature?.properties?.idsubsls;
+      const isInFilter = !filteredSlsIds || filteredSlsIds.has(idsubsls);
+
+      tooltipEl.style.display = (zoom >= LABEL_MIN_ZOOM && isInFilter) ? '' : 'none';
+    });
+  }, [filteredSlsIds]);
+  // ────────────────────────────────────────────────────────────────────
 
   // Track User Location with marker & accuracy circle
   useEffect(() => {
