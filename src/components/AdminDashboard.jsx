@@ -42,6 +42,7 @@ export default function AdminDashboard({ isOpen, onClose, geojson, showToast }) 
   const [editingPhoto, setEditingPhoto] = useState(null);
   const [editingChange, setEditingChange] = useState(null);
   const [editPhotoCategory, setEditPhotoCategory] = useState('');
+  const [editPhotoDescription, setEditPhotoDescription] = useState(''); // ← BARU
   const [editChangeType, setEditChangeType] = useState('');
   const [editChangeNotes, setEditChangeNotes] = useState('');
   const [adminPassword, setAdminPassword] = useState('');
@@ -160,7 +161,7 @@ export default function AdminDashboard({ isOpen, onClose, geojson, showToast }) 
     }
   };
 
-  // Handle photo save edit
+  // Handle photo save edit — sekarang menyertakan description
   const handleSavePhotoEdit = async () => {
     if (!editingPhoto || !editPhotoCategory) return;
 
@@ -174,13 +175,14 @@ export default function AdminDashboard({ isOpen, onClose, geojson, showToast }) 
         body: JSON.stringify({ 
           id: editingPhoto.id, 
           category: editPhotoCategory,
+          description: editPhotoDescription, // ← BARU
           password: adminPassword
         })
       });
       const resJson = await res.json();
 
       if (res.ok && resJson.status === 'success') {
-        showToast('Kategori foto berhasil diubah!', 'success');
+        showToast('Data foto berhasil diperbarui!', 'success');
         setEditingPhoto(null);
         fetchData();
       } else {
@@ -294,7 +296,6 @@ export default function AdminDashboard({ isOpen, onClose, geojson, showToast }) 
 
   const getApiUrl = (relativePath) => {
     const apiBaseUrl = localStorage.getItem('maps_api_url') || 'api';
-    // If the path starts with api/, we strip it if apiBaseUrl already includes api
     const cleanPath = relativePath.startsWith('api/') ?
       relativePath.replace('api/', '') : relativePath;
     return `${apiBaseUrl}/${cleanPath}`;
@@ -447,73 +448,89 @@ export default function AdminDashboard({ isOpen, onClose, geojson, showToast }) 
 
                     <div style={styles.photoGrid}>
                       {filteredPhotos.map((photo) => (
-                        <GlassPanel key={photo.id} style={styles.photoCard}>
-                        <div style={styles.photoThumbContainer} onClick={() => setSelectedPhoto(photo)}>
-                          <img 
-                            src={getApiUrl(photo.photo_path)} 
-                            alt={photo.nmsls} 
-                            style={styles.photoThumb} 
-                          />
-                          <div style={styles.photoOverlay}>
-                            <Eye size={18} color="#fff" />
-                          </div>
-                        </div>
-                        <div style={styles.photoInfo}>
-                          <div style={styles.photoHeader}>
-                            <span style={{
-                              ...styles.categoryBadge,
-                              ...(photo.category === 'Kendala' ? styles.badgeRed : 
-                                  photo.category === 'Dokumentasi' ? styles.badgeGreen : styles.badgeGray)
-                            }}>
-                              {photo.category}
-                            </span>
-                            <span style={styles.photoDate}>{formatDate(photo.created_at)}</span>
-                          </div>
-                          <h4 style={styles.photoTitle}>{photo.nmsls}</h4>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: '#666', marginTop: '2px' }}>
-                            <span>Desa: <strong>{photo.nmdesa}</strong></span>
-                            <span style={styles.photoCode}>{photo.idsubsls.substring(10, 14)}</span>
-                          </div>
-                          
-                          {/* Admin Edit/Delete Actions */}
-                          {isAdminAuthenticated && (
-                            <div style={styles.photoAdminActions}>
-                              <button 
-                                onClick={() => {
-                                  setEditingPhoto(photo);
-                                  setEditPhotoCategory(photo.category);
-                                }}
-                                style={styles.photoAdminBtn}
-                              >
-                                Edit
-                              </button>
-                              <button 
-                                onClick={() => handleDeletePhoto(photo.id)}
-                                style={{ ...styles.photoAdminBtn, color: '#ff3b30', backgroundColor: 'rgba(255,59,48,0.08)' }}
-                              >
-                                Hapus
-                              </button>
+                        <GlassPanel key={photo.id} style={{
+                          ...styles.photoCard,
+                          // Tinggi dinamis karena ada deskripsi
+                          height: photo.description ? 'auto' : '290px',
+                          minHeight: '290px',
+                        }}>
+                          <div style={styles.photoThumbContainer} onClick={() => setSelectedPhoto(photo)}>
+                            <img 
+                              src={getApiUrl(photo.photo_path)} 
+                              alt={photo.nmsls} 
+                              style={styles.photoThumb} 
+                            />
+                            <div style={styles.photoOverlay}>
+                              <Eye size={18} color="#fff" />
                             </div>
-                          )}
+                          </div>
+                          <div style={styles.photoInfo}>
+                            <div>
+                              <div style={styles.photoHeader}>
+                                <span style={{
+                                  ...styles.categoryBadge,
+                                  ...(photo.category === 'Kendala' ? styles.badgeRed : 
+                                      photo.category === 'Dokumentasi' ? styles.badgeGreen : styles.badgeGray)
+                                }}>
+                                  {photo.category}
+                                </span>
+                                <span style={styles.photoDate}>{formatDate(photo.created_at)}</span>
+                              </div>
+                              <h4 style={styles.photoTitle}>{photo.nmsls}</h4>
+                              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: '#666', marginTop: '2px' }}>
+                                <span>Desa: <strong>{photo.nmdesa}</strong></span>
+                                <span style={styles.photoCode}>{photo.idsubsls.substring(10, 14)}</span>
+                              </div>
 
-                          <div style={styles.photoFooter}>
-                            <div style={styles.photoCoords}>
-                              <MapPin size={12} style={{ marginRight: 4 }} />
-                              <span>{photo.latitude.toFixed(5)}, {photo.longitude.toFixed(5)}</span>
+                              {/* ── BARU: Deskripsi Foto ── */}
+                              {photo.description ? (
+                                <div style={styles.photoDescriptionBox}>
+                                  <StickyNote size={11} style={{ marginRight: 5, flexShrink: 0, marginTop: 1 }} />
+                                  <p style={styles.photoDescription}>{photo.description}</p>
+                                </div>
+                              ) : null}
                             </div>
-                            <a 
-                              href={getApiUrl(photo.photo_path)} 
-                              download 
-                              target="_blank" 
-                              rel="noreferrer"
-                              style={styles.downloadLink}
-                              title="Unduh file foto"
-                            >
-                              <Download size={14} />
-                            </a>
+
+                            {/* Admin Edit/Delete Actions */}
+                            {isAdminAuthenticated && (
+                              <div style={styles.photoAdminActions}>
+                                <button 
+                                  onClick={() => {
+                                    setEditingPhoto(photo);
+                                    setEditPhotoCategory(photo.category);
+                                    setEditPhotoDescription(photo.description || ''); // ← BARU
+                                  }}
+                                  style={styles.photoAdminBtn}
+                                >
+                                  Edit
+                                </button>
+                                <button 
+                                  onClick={() => handleDeletePhoto(photo.id)}
+                                  style={{ ...styles.photoAdminBtn, color: '#ff3b30', backgroundColor: 'rgba(255,59,48,0.08)' }}
+                                >
+                                  Hapus
+                                </button>
+                              </div>
+                            )}
+
+                            <div style={styles.photoFooter}>
+                              <div style={styles.photoCoords}>
+                                <MapPin size={12} style={{ marginRight: 4 }} />
+                                <span>{photo.latitude.toFixed(5)}, {photo.longitude.toFixed(5)}</span>
+                              </div>
+                              <a 
+                                href={getApiUrl(photo.photo_path)} 
+                                download 
+                                target="_blank" 
+                                rel="noreferrer"
+                                style={styles.downloadLink}
+                                title="Unduh file foto"
+                              >
+                                <Download size={14} />
+                              </a>
+                            </div>
                           </div>
-                        </div>
-                      </GlassPanel>
+                        </GlassPanel>
                       ))}
                     </div>
                     {filteredPhotos.length === 0 && (
@@ -696,11 +713,11 @@ export default function AdminDashboard({ isOpen, onClose, geojson, showToast }) 
         </div>
       )}
 
-      {/* EDIT PHOTO MODAL */}
+      {/* EDIT PHOTO MODAL — sekarang ada field deskripsi */}
       {editingPhoto && (
         <div style={styles.editDialogOverlay}>
           <GlassPanel style={styles.editDialogContainer}>
-            <h3 style={styles.editDialogTitle}>Edit Kategori Foto</h3>
+            <h3 style={styles.editDialogTitle}>Edit Data Foto</h3>
             <p style={styles.editDialogSub}>{editingPhoto.nmsls}</p>
             
             <div style={styles.formGroup}>
@@ -714,6 +731,24 @@ export default function AdminDashboard({ isOpen, onClose, geojson, showToast }) 
                 <option value="Kendala">Kendala</option>
                 <option value="Lainnya">Lainnya</option>
               </select>
+            </div>
+
+            {/* ── BARU: Field Deskripsi di Modal Edit ── */}
+            <div style={styles.formGroup}>
+              <label style={styles.formLabel}>Deskripsi Foto</label>
+              <textarea
+                value={editPhotoDescription}
+                onChange={(e) => setEditPhotoDescription(e.target.value)}
+                placeholder={
+                  editPhotoCategory === 'Dokumentasi' ? 'Contoh: Dokumentasi kegiatan pendataan RT 01...' :
+                  editPhotoCategory === 'Kendala'     ? 'Contoh: Jalan menuju lokasi tidak dapat dilalui...' :
+                                                       'Tambahkan keterangan foto di sini...'
+                }
+                maxLength={500}
+                rows={3}
+                style={styles.editDescriptionTextarea}
+              />
+              <span style={styles.editDescriptionCount}>{editPhotoDescription.length}/500</span>
             </div>
             
             <div style={styles.dialogActions}>
@@ -750,12 +785,13 @@ export default function AdminDashboard({ isOpen, onClose, geojson, showToast }) 
             </div>
 
             <div style={styles.formGroup}>
-              <label style={styles.formLabel}>Catatan / Keterangan</label>
-              <textarea 
+              <label style={styles.formLabel}>Catatan / Deskripsi</label>
+              <textarea
                 value={editChangeNotes}
                 onChange={(e) => setEditChangeNotes(e.target.value)}
-                style={styles.textareaInput}
+                placeholder="Tambahkan catatan perubahan..."
                 rows={3}
+                style={styles.textareaInput}
               />
             </div>
             
@@ -771,36 +807,30 @@ export default function AdminDashboard({ isOpen, onClose, geojson, showToast }) 
         </div>
       )}
 
-      {/* CHANGE DETAIL MODAL (mobile) */}
+      {/* MOBILE: Change Detail Modal */}
       {selectedChange && (
         <div style={styles.editDialogOverlay} onClick={() => setSelectedChange(null)}>
-          <GlassPanel style={styles.changeDetailContainer} className="animate-fade-in" onClick={(e) => e.stopPropagation()}>
-            {/* Header modal */}
+          <GlassPanel style={styles.changeDetailContainer} onClick={(e) => e.stopPropagation()} className="animate-fade-in">
             <div style={styles.changeDetailHeader}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', minWidth: 0 }}>
-                <span style={{
-                  ...styles.typeBadge,
-                  ...(selectedChange.change_type === 'Pemekaran SLS' ? styles.badgeRed :
-                      selectedChange.change_type === 'Penggabungan SLS' ? styles.badgeBlue :
-                      selectedChange.change_type === 'Pergantian Tingkatan SLS' ? styles.badgeGreen : styles.badgeOrange),
-                  flexShrink: 0,
-                }}>
-                  {selectedChange.change_type}
-                </span>
-              </div>
+              <span style={{
+                ...styles.typeBadge,
+                ...(selectedChange.change_type === 'Pemekaran SLS' ? styles.badgeRed :
+                    selectedChange.change_type === 'Penggabungan SLS' ? styles.badgeBlue :
+                    selectedChange.change_type === 'Pergantian Tingkatan SLS' ? styles.badgeGreen : styles.badgeOrange)
+              }}>
+                {selectedChange.change_type}
+              </span>
               <button onClick={() => setSelectedChange(null)} style={styles.closeBtn}>
-                <X size={20} />
+                <X size={18} />
               </button>
             </div>
 
-            {/* Nama & kode SLS */}
             <div style={styles.changeDetailSection}>
               <span style={styles.changeDetailSectionLabel}>SLS / Sub-SLS</span>
               <span style={styles.slsCellName}>{selectedChange.nmsls}</span>
               <span style={styles.slsCellCode}>{selectedChange.idsubsls}</span>
             </div>
 
-            {/* Catatan */}
             {selectedChange.notes ? (
               <div style={styles.changeDetailSection}>
                 <span style={styles.changeDetailSectionLabel}>Catatan / Deskripsi</span>
@@ -881,6 +911,12 @@ export default function AdminDashboard({ isOpen, onClose, geojson, showToast }) 
             />
             <div style={styles.zoomFooter}>
               <h4 style={styles.zoomTitle}>{selectedPhoto.nmsls}</h4>
+              {/* ── BARU: Tampilkan deskripsi juga di zoom modal ── */}
+              {selectedPhoto.description && (
+                <p style={{ ...styles.zoomText, fontSize: '13px', color: '#dddddd', marginTop: '6px', marginBottom: '4px', fontStyle: 'italic' }}>
+                  "{selectedPhoto.description}"
+                </p>
+              )}
               <p style={styles.zoomText}>
                 Kategori: <strong>{selectedPhoto.category}</strong> | Geotag: {selectedPhoto.latitude.toFixed(6)}, {selectedPhoto.longitude.toFixed(6)} | Waktu: {formatDate(selectedPhoto.created_at)}
               </p>
@@ -1069,7 +1105,6 @@ const styles = {
     flexDirection: 'column',
     padding: '0px',
     border: '1px solid rgba(255,255,255,0.5)',
-    height: '290px',
   },
   photoThumbContainer: {
     width: '100%',
@@ -1078,15 +1113,13 @@ const styles = {
     backgroundColor: '#000000',
     cursor: 'pointer',
     overflow: 'hidden',
+    flexShrink: 0,
   },
   photoThumb: {
     width: '100%',
     height: '100%',
     objectFit: 'cover',
     transition: 'transform 0.3s ease',
-    '&:hover': {
-      transform: 'scale(1.05)',
-    }
   },
   photoOverlay: {
     position: 'absolute',
@@ -1100,9 +1133,6 @@ const styles = {
     alignItems: 'center',
     justifyContent: 'center',
     transition: 'opacity 0.2s',
-    '&:hover': {
-      opacity: 1,
-    }
   },
   photoInfo: {
     padding: '12px 14px',
@@ -1141,6 +1171,30 @@ const styles = {
     fontSize: '11px',
     color: '#777',
     marginTop: '2px',
+  },
+  // ── BARU: Style deskripsi foto di card ──
+  photoDescriptionBox: {
+    display: 'flex',
+    alignItems: 'flex-start',
+    gap: '0px',
+    marginTop: '7px',
+    padding: '7px 9px',
+    backgroundColor: 'rgba(0,0,0,0.03)',
+    borderRadius: '7px',
+    border: '1px solid rgba(0,0,0,0.05)',
+    color: 'hsl(var(--color-gray-text))',
+  },
+  photoDescription: {
+    fontSize: '12px',
+    color: 'hsl(var(--color-gray-text))',
+    margin: 0,
+    lineHeight: '1.45',
+    fontStyle: 'italic',
+    wordBreak: 'break-word',
+    display: '-webkit-box',
+    WebkitLineClamp: 3,
+    WebkitBoxOrient: 'vertical',
+    overflow: 'hidden',
   },
   photoFooter: {
     display: 'flex',
@@ -1416,6 +1470,28 @@ const styles = {
     fontFamily: 'inherit',
     outline: 'none',
     resize: 'vertical',
+  },
+  // ── BARU: Style textarea deskripsi di modal edit foto ──
+  editDescriptionTextarea: {
+    padding: '10px 12px',
+    borderRadius: '10px',
+    border: '1.5px solid rgba(0,0,0,0.1)',
+    backgroundColor: '#ffffff',
+    fontSize: '13px',
+    fontFamily: 'inherit',
+    outline: 'none',
+    resize: 'vertical',
+    minHeight: '72px',
+    lineHeight: '1.5',
+    boxSizing: 'border-box',
+    width: '100%',
+  },
+  editDescriptionCount: {
+    fontSize: '11px',
+    color: 'hsl(var(--color-gray-text))',
+    textAlign: 'right',
+    display: 'block',
+    marginTop: '-2px',
   },
   dialogActions: {
     display: 'flex',

@@ -17,6 +17,7 @@ $latitude = $inputData['latitude'] ?? null;
 $longitude = $inputData['longitude'] ?? null;
 $accuracy = $inputData['accuracy'] ?? 0;
 $category = $inputData['category'] ?? 'Lainnya';
+$description = $inputData['description'] ?? ''; 
 
 if (!$image) {
     http_response_code(400);
@@ -79,20 +80,21 @@ if (file_put_contents($destination, $decodedData) === false) {
     exit();
 }
 
-// Store record in MySQL
+// Store record in MySQL — sekarang menyertakan kolom description
 try {
-    $sql = "INSERT INTO sls_photos (idsubsls, nmsls, latitude, longitude, accuracy, category, photo_path) 
-            VALUES (:idsubsls, :nmsls, :latitude, :longitude, :accuracy, :category, :photo_path)";
+    $sql = "INSERT INTO sls_photos (idsubsls, nmsls, latitude, longitude, accuracy, category, description, photo_path) 
+            VALUES (:idsubsls, :nmsls, :latitude, :longitude, :accuracy, :category, :description, :photo_path)";
     
     $stmt = $conn->prepare($sql);
     $stmt->execute([
-        ':idsubsls' => $idsubsls,
-        ':nmsls' => $nmsls,
-        ':latitude' => $latitude,
-        ':longitude' => $longitude,
-        ':accuracy' => $accuracy,
-        ':category' => $category,
-        ':photo_path' => 'api/uploads/' . $fileName
+        ':idsubsls'    => $idsubsls,
+        ':nmsls'       => $nmsls,
+        ':latitude'    => $latitude,
+        ':longitude'   => $longitude,
+        ':accuracy'    => $accuracy,
+        ':category'    => $category,
+        ':description' => $description, 
+        ':photo_path'  => 'api/uploads/' . $fileName
     ]);
     
     echo json_encode([

@@ -69,7 +69,8 @@ try {
             latitude DOUBLE NOT NULL,
             longitude DOUBLE NOT NULL,
             accuracy DOUBLE NOT NULL,
-            category VARCHAR(50) NOT NULL, -- 'Dokumentasi', 'Kendala', 'Lainnya'
+            category VARCHAR(50) NOT NULL, -- 'Dokumentasi', 'Kendala', 'Lainnya',
+            description TEXT, -- Deskripsi tambahan untuk foto
             photo_path VARCHAR(255) NOT NULL,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

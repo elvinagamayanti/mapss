@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import GlassPanel from './GlassPanel';
-import { Camera, X, RefreshCw, Upload, Download, ArrowLeft, AlertTriangle, Check, Image as ImageIcon } from 'lucide-react';
+import { Camera, X, RefreshCw, Upload, ArrowLeft, AlertTriangle, Check, Image as ImageIcon } from 'lucide-react';
 
 export default function WatermarkCamera({ 
   isOpen, 
@@ -15,15 +15,28 @@ export default function WatermarkCamera({
 
   const [stream, setStream] = useState(null);
   const [error, setError] = useState(null);
-  const [facingMode, setFacingMode] = useState('environment'); // environment (back) or user (front)
+  const [facingMode, setFacingMode] = useState('environment');
   const [capturedImage, setCapturedImage] = useState(null);
   const [cameraLoading, setCameraLoading] = useState(true);
   
-  // New features states
-  const [mode, setMode] = useState('capture'); // 'capture' or 'upload'
-  const [category, setCategory] = useState('Dokumentasi'); // Dokumentasi, Kendala, Lainnya
+  const [mode, setMode] = useState('capture');
+  const [category, setCategory] = useState('Dokumentasi');
+  const [description, setDescription] = useState(''); // ← field deskripsi
   const [uploading, setUploading] = useState(false);
   const [uploadSuccess, setUploadSuccess] = useState(false);
+
+  // ── Reset semua state form saat modal dibuka ulang ──
+  // Ini adalah fix utama: setiap kali isOpen berubah jadi true,
+  // description (dan state lainnya) direset dari awal.
+  useEffect(() => {
+    if (isOpen) {
+      setCapturedImage(null);
+      setDescription('');
+      setCategory('Dokumentasi');
+      setError(null);
+      setUploadSuccess(false);
+    }
+  }, [isOpen]);
 
   // Initialize camera stream
   useEffect(() => {
@@ -84,26 +97,23 @@ export default function WatermarkCamera({
 
   // Draw Watermark helper
   const drawWatermark = (ctx, width, height) => {
-    const padding = Math.max(width, height) * 0.02; // proportional padding
+    const padding = Math.max(width, height) * 0.02;
     const boxWidth = width * 0.55 > 420 ? width * 0.55 : width - padding * 2;
     const boxHeight = height * 0.24 > 170 ? height * 0.24 : 170;
     
     const boxX = padding;
     const boxY = height - boxHeight - padding;
 
-    // Translucent black background card
     ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
     ctx.beginPath();
     ctx.roundRect(boxX, boxY, boxWidth, boxHeight, 16);
     ctx.fill();
 
-    // Orange left border
     ctx.fillStyle = '#ff6600';
     ctx.beginPath();
     ctx.roundRect(boxX, boxY, 8, boxHeight, [16, 0, 0, 16]);
     ctx.fill();
 
-    // Text drawing
     ctx.fillStyle = '#ffffff';
     ctx.textBaseline = 'top';
     
@@ -114,27 +124,23 @@ export default function WatermarkCamera({
     let currentY = boxY + 16;
     const textIndent = boxX + 24;
 
-    // 1. Header Title
     ctx.font = `bold ${titleSize}px Outfit, Arial`;
-    ctx.fillStyle = '#ff8c3a'; // Light orange tint
+    ctx.fillStyle = '#ff8c3a';
     ctx.fillText('Kegiatan Pencacahan Sensus Ekonomi', textIndent, currentY);
     currentY += titleSize + 10;
 
-    // 2. SLS Name
     ctx.fillStyle = '#ffffff';
     ctx.font = `bold ${textSize}px Outfit, Arial`;
     const slsName = currentSls ? currentSls.properties.nmsls : 'Luar Batas SLS';
     ctx.fillText(`SLS: ${slsName}`, textIndent, currentY);
     currentY += textSize + 6;
 
-    // 3. SLS ID
     ctx.font = `${codeSize}px Courier New, monospace`;
     ctx.fillStyle = '#cccccc';
     const slsId = currentSls ? currentSls.properties.idsubsls : '-';
     ctx.fillText(`ID SUBSLS: ${slsId}`, textIndent, currentY);
     currentY += codeSize + 8;
 
-    // 4. Coordinates
     ctx.font = `${textSize}px Outfit, Arial`;
     ctx.fillStyle = '#ffffff';
     const lat = userLocation ? userLocation.latitude.toFixed(6) : '-';
@@ -143,7 +149,6 @@ export default function WatermarkCamera({
     ctx.fillText(`KOORDINAT: ${lat}, ${lng} (±${acc}m)`, textIndent, currentY);
     currentY += textSize + 6;
 
-    // 5. Date & Time
     ctx.font = `${codeSize}px Outfit, Arial`;
     ctx.fillStyle = '#a8a8a8';
     const timestamp = new Date().toLocaleString('id-ID', { timeZoneName: 'short' });
@@ -160,7 +165,6 @@ export default function WatermarkCamera({
     let width = video.videoWidth;
     let height = video.videoHeight;
 
-    // Compress: Limit size to max 1600px width/height to save storage
     const maxDim = 1600;
     if (width > maxDim || height > maxDim) {
       if (width > height) {
@@ -175,7 +179,6 @@ export default function WatermarkCamera({
     canvas.width = width;
     canvas.height = height;
 
-    // Draw video frame & watermark
     ctx.drawImage(video, 0, 0, width, height);
     drawWatermark(ctx, width, height);
 
@@ -189,7 +192,6 @@ export default function WatermarkCamera({
     const file = e.target.files[0];
     if (!file) return;
 
-    // Check size limit: 2 MB
     const maxMB = 2;
     const maxSizeBytes = maxMB * 1024 * 1024;
     if (file.size > maxSizeBytes) {
@@ -209,7 +211,6 @@ export default function WatermarkCamera({
         let width = img.naturalWidth || img.width;
         let height = img.naturalHeight || img.height;
 
-        // Compress: Limit size to max 1600px width/height to save storage
         const maxDim = 1600;
         if (width > maxDim || height > maxDim) {
           if (width > height) {
@@ -224,7 +225,6 @@ export default function WatermarkCamera({
         canvas.width = width;
         canvas.height = height;
 
-        // Draw uploaded image & watermark
         ctx.drawImage(img, 0, 0, width, height);
         drawWatermark(ctx, width, height);
 
@@ -253,14 +253,13 @@ export default function WatermarkCamera({
         latitude: userLocation ? userLocation.latitude : 0,
         longitude: userLocation ? userLocation.longitude : 0,
         accuracy: userLocation ? userLocation.accuracy : 0,
-        category: category
+        category: category,
+        description: description  // ← kirim deskripsi ke server
       };
 
       const res = await fetch(uploadEndpoint, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
       });
 
@@ -268,8 +267,11 @@ export default function WatermarkCamera({
       if (res.ok && data.status === 'success') {
         setUploadSuccess(true);
         setTimeout(() => {
+          // ── Reset semua state form setelah upload sukses ──
           setUploadSuccess(false);
           setCapturedImage(null);
+          setDescription('');        // ← reset deskripsi
+          setCategory('Dokumentasi'); // ← reset kategori ke default
           onClose();
         }, 1500);
       } else {
@@ -283,8 +285,10 @@ export default function WatermarkCamera({
     }
   };
 
+  // Ambil ulang foto — reset capturedImage DAN deskripsi
   const handleRetake = () => {
     setCapturedImage(null);
+    setDescription('');  // ← reset deskripsi saat ambil ulang
     setError(null);
     setCameraLoading(false);
   };
@@ -309,19 +313,13 @@ export default function WatermarkCamera({
               <div style={styles.tabs}>
                 <button 
                   onClick={() => setMode('capture')} 
-                  style={{
-                    ...styles.tab,
-                    ...(mode === 'capture' ? styles.activeTab : {})
-                  }}
+                  style={{ ...styles.tab, ...(mode === 'capture' ? styles.activeTab : {}) }}
                 >
                   <Camera size={14} style={{ marginRight: 6 }} /> Kamera
                 </button>
                 <button 
                   onClick={() => setMode('upload')} 
-                  style={{
-                    ...styles.tab,
-                    ...(mode === 'upload' ? styles.activeTab : {})
-                  }}
+                  style={{ ...styles.tab, ...(mode === 'upload' ? styles.activeTab : {}) }}
                 >
                   <Upload size={14} style={{ marginRight: 6 }} /> Unggah File
                 </button>
@@ -334,10 +332,9 @@ export default function WatermarkCamera({
           </button>
         </div>
 
-        {/* Media Frame (Camera Feed or Image Selector) */}
+        {/* Media Frame */}
         <div style={styles.cameraFrame}>
           {capturedImage ? (
-            /* PREVIEW */
             <div style={styles.previewContainer}>
               {uploadSuccess && (
                 <div style={styles.successOverlay}>
@@ -348,7 +345,6 @@ export default function WatermarkCamera({
               <img src={capturedImage} alt="Watermark Preview" style={styles.previewImage} />
             </div>
           ) : mode === 'upload' ? (
-            /* FILE UPLOAD MODE */
             <div style={styles.uploadBoxContainer}>
               <GlassPanel style={styles.uploadPlaceholder} onClick={triggerFileSelect}>
                 <ImageIcon size={48} color="hsl(var(--color-primary))" style={{ marginBottom: 12 }} />
@@ -364,7 +360,6 @@ export default function WatermarkCamera({
               </GlassPanel>
             </div>
           ) : error ? (
-            /* ERROR MESSAGE */
             <div style={styles.errorContainer}>
               <AlertTriangle size={40} color="#ff3b30" style={{ marginBottom: 12 }} />
               <p style={styles.errorText}>{error}</p>
@@ -373,7 +368,6 @@ export default function WatermarkCamera({
               </button>
             </div>
           ) : (
-            /* LIVE CAMERA STREAM */
             <div style={styles.videoContainer}>
               {cameraLoading && (
                 <div style={styles.spinnerOverlay}>
@@ -388,8 +382,6 @@ export default function WatermarkCamera({
                 muted 
                 style={styles.video} 
               />
-              
-              {/* Overlay preview indicator */}
               <div style={styles.liveOverlay}>
                 <div style={styles.liveOverlayTag}>Pencacahan Sensus Ekonomi</div>
                 <div style={styles.liveWatermark}>
@@ -406,11 +398,12 @@ export default function WatermarkCamera({
           )}
         </div>
 
-        {/* Footer controls & Category selection */}
+        {/* Footer controls & Category + Description */}
         <div style={styles.footer}>
           {capturedImage ? (
-            /* Action Form after capturing image */
             <div style={styles.capturedForm}>
+
+              {/* Pilih Kategori */}
               <div style={styles.categorySelectGroup}>
                 <label style={styles.categoryLabel}>Klasifikasikan Foto Sebagai:</label>
                 <div className="camera-category-group" style={styles.categoryRadioGroup}>
@@ -436,40 +429,55 @@ export default function WatermarkCamera({
                 </div>
               </div>
 
+              {/* ── Deskripsi Foto ── */}
+              <div style={styles.descriptionGroup}>
+                <label style={styles.categoryLabel}>
+                  Deskripsi Foto
+                  <span style={styles.descriptionOptional}> (opsional)</span>
+                </label>
+                <textarea
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  placeholder={
+                    category === 'Dokumentasi'
+                      ? 'Contoh: Dokumentasi kegiatan pendataan RT 01 bersama kepala lingkungan...'
+                      : category === 'Kendala'
+                      ? 'Contoh: Jalan menuju lokasi tidak dapat dilalui karena banjir...'
+                      : 'Tambahkan keterangan foto di sini...'
+                  }
+                  maxLength={500}
+                  rows={3}
+                  style={styles.descriptionTextarea}
+                  disabled={uploading}
+                />
+                <span style={styles.descriptionCount}>{description.length}/500</span>
+              </div>
+
+              {/* Tombol Aksi */}
               <div style={styles.formActions}>
                 <button onClick={handleRetake} className="btn-secondary" style={styles.actionBtn} disabled={uploading}>
                   <ArrowLeft size={16} /> Ambil Ulang
                 </button>
                 <button onClick={handleServerUpload} className="btn-primary" style={styles.actionBtn} disabled={uploading}>
                   {uploading ? (
-                    <>
-                      <RefreshCw size={16} className="pulse-location" /> Mengunggah...
-                    </>
+                    <><RefreshCw size={16} className="pulse-location" /> Mengunggah...</>
                   ) : (
-                    <>
-                      <Upload size={16} /> Unggah Ke Server
-                    </>
+                    <><Upload size={16} /> Unggah Ke Server</>
                   )}
                 </button>
               </div>
+
             </div>
           ) : (
-            /* Captured live actions */
             <div style={styles.liveControls}>
               {mode === 'capture' && !error && !cameraLoading && (
                 <>
-                  <button 
-                    onClick={handleToggleCamera} 
-                    className="btn-secondary" 
-                    style={styles.iconBtn}
-                  >
+                  <button onClick={handleToggleCamera} className="btn-secondary" style={styles.iconBtn}>
                     <RefreshCw size={18} />
                   </button>
-
                   <button onClick={handleCapture} style={styles.captureBtn}>
                     <div style={styles.captureBtnInner} />
                   </button>
-
                   <div style={{ width: 42 }} />
                 </>
               )}
@@ -482,7 +490,6 @@ export default function WatermarkCamera({
           )}
         </div>
 
-        {/* Output composite canvas */}
         <canvas ref={canvasRef} style={{ display: 'none' }} />
       </GlassPanel>
     </div>
@@ -511,9 +518,9 @@ const styles = {
     display: 'flex',
     flexDirection: 'column',
     overflow: 'hidden',
-    border: '1px solid rgba(255, 255, 255, 0.5)',
-    padding: '0px',
-    borderRadius: '24px',
+    padding: '0',
+    border: '1px solid rgba(255,255,255,0.5)',
+    borderRadius: '20px',
   },
   header: {
     display: 'flex',
@@ -521,75 +528,69 @@ const styles = {
     alignItems: 'center',
     padding: '16px 20px',
     borderBottom: '1px solid rgba(0,0,0,0.06)',
-    backgroundColor: 'rgba(255,255,255,0.4)',
+    backgroundColor: 'rgba(255,255,255,0.6)',
+    backdropFilter: 'blur(10px)',
+    flexShrink: 0,
   },
   tabHeader: {
     display: 'flex',
     flexDirection: 'column',
     gap: '10px',
-    flex: 1,
   },
   title: {
-    fontSize: '15px',
-    fontWeight: 600,
+    fontSize: '16px',
+    fontWeight: 700,
     color: 'hsl(var(--color-dark))',
+    margin: 0,
   },
   tabs: {
     display: 'flex',
-    background: 'rgba(0, 0, 0, 0.05)',
-    padding: '3px',
-    borderRadius: '10px',
-    alignSelf: 'flex-start',
+    gap: '6px',
   },
   tab: {
-    padding: '6px 12px',
+    padding: '6px 14px',
     fontSize: '12px',
-    fontWeight: 500,
-    border: 'none',
-    background: 'none',
-    cursor: 'pointer',
+    fontWeight: 600,
     borderRadius: '8px',
+    border: '1px solid rgba(0,0,0,0.08)',
+    backgroundColor: 'rgba(0,0,0,0.04)',
+    cursor: 'pointer',
     display: 'flex',
     alignItems: 'center',
     color: 'hsl(var(--color-gray-text))',
     transition: 'all 0.2s',
   },
   activeTab: {
-    background: '#ffffff',
+    backgroundColor: 'rgba(255, 102, 0, 0.1)',
+    border: '1px solid hsl(var(--color-primary))',
     color: 'hsl(var(--color-primary))',
-    boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
   },
   closeBtn: {
     background: 'none',
     border: 'none',
     cursor: 'pointer',
     color: 'hsl(var(--color-gray-text))',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
     padding: '4px',
   },
   cameraFrame: {
     flex: 1,
-    backgroundColor: '#07070a',
     position: 'relative',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
+    backgroundColor: '#0c0c0f',
     overflow: 'hidden',
+    minHeight: 0,
   },
   videoContainer: {
     width: '100%',
     height: '100%',
     position: 'relative',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   spinnerOverlay: {
     position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: 'rgba(0,0,0,0.8)',
+    top: 0, left: 0, right: 0, bottom: 0,
+    backgroundColor: 'rgba(0,0,0,0.6)',
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'center',
@@ -669,10 +670,7 @@ const styles = {
   },
   successOverlay: {
     position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
+    top: 0, left: 0, right: 0, bottom: 0,
     backgroundColor: 'rgba(52, 199, 89, 0.85)',
     backdropFilter: 'blur(10px)',
     display: 'flex',
@@ -739,12 +737,13 @@ const styles = {
     lineHeight: '1.4',
   },
   footer: {
-    padding: '20px 24px',
+    padding: '16px 20px',
     backgroundColor: 'rgba(255,255,255,0.7)',
     backdropFilter: 'blur(10px)',
     borderTop: '1px solid rgba(0,0,0,0.06)',
     display: 'flex',
     justifyContent: 'center',
+    flexShrink: 0,
   },
   liveControls: {
     display: 'flex',
@@ -756,7 +755,7 @@ const styles = {
   capturedForm: {
     display: 'flex',
     flexDirection: 'column',
-    gap: '16px',
+    gap: '12px',
     width: '100%',
     maxWidth: '440px',
   },
@@ -794,6 +793,40 @@ const styles = {
     background: 'rgba(255, 102, 0, 0.08)',
     border: '1px solid hsl(var(--color-primary))',
     color: 'hsl(var(--color-primary))',
+  },
+  // ── Styles deskripsi ──
+  descriptionGroup: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '5px',
+  },
+  descriptionOptional: {
+    fontSize: '11px',
+    fontWeight: 400,
+    color: 'hsl(var(--color-gray-text))',
+  },
+  descriptionTextarea: {
+    width: '100%',
+    padding: '9px 12px',
+    borderRadius: '10px',
+    border: '1.5px solid rgba(0,0,0,0.10)',
+    backgroundColor: 'rgba(255,255,255,0.9)',
+    fontSize: '13px',
+    color: 'hsl(var(--color-dark))',
+    resize: 'none',
+    minHeight: '68px',
+    fontFamily: 'inherit',
+    lineHeight: '1.5',
+    outline: 'none',
+    boxSizing: 'border-box',
+    transition: 'border-color 0.2s',
+  },
+  descriptionCount: {
+    fontSize: '11px',
+    color: 'hsl(var(--color-gray-text))',
+    textAlign: 'right',
+    marginTop: '-2px',
+    paddingRight: '2px',
   },
   formActions: {
     display: 'flex',

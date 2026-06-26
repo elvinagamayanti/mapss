@@ -3,9 +3,10 @@ require_once 'db.php';
 
 // Get JSON POST payload
 $inputData = json_decode(file_get_contents('php://input'), true);
-$id = $inputData['id'] ?? null;
-$category = $inputData['category'] ?? '';
-$password = $inputData['password'] ?? '';
+$id          = $inputData['id'] ?? null;
+$category    = $inputData['category'] ?? '';
+$description = $inputData['description'] ?? ''; 
+$password    = $inputData['password'] ?? '';
 
 if ($password !== 'iyatawwa10') {
     http_response_code(403);
@@ -20,16 +21,18 @@ if (!$id || empty($category)) {
 }
 
 try {
-    $sql = "UPDATE sls_photos SET category = :category WHERE id = :id";
+    // Update kategori sekaligus deskripsi
+    $sql = "UPDATE sls_photos SET category = :category, description = :description WHERE id = :id";
     $stmt = $conn->prepare($sql);
     $stmt->execute([
-        ':category' => $category,
-        ':id' => $id
+        ':category'    => $category,
+        ':description' => $description, 
+        ':id'          => $id
     ]);
 
-    echo json_encode(["status" => "success", "message" => "Kategori foto berhasil diubah"]);
+    echo json_encode(["status" => "success", "message" => "Data foto berhasil diperbarui"]);
 } catch (PDOException $e) {
     http_response_code(500);
-    echo json_encode(["status" => "error", "message" => "Gagal mengubah kategori foto: " . $e->getMessage()]);
+    echo json_encode(["status" => "error", "message" => "Gagal memperbarui data foto: " . $e->getMessage()]);
 }
 ?>
