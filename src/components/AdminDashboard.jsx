@@ -561,7 +561,7 @@ export default function AdminDashboard({ isOpen, onClose, geojson, showToast }) 
                                 ...styles.typeBadge,
                                 ...(item.change_type === 'Pemekaran SLS' ? styles.badgeRed :
                                     item.change_type === 'Penggabungan SLS' ? styles.badgeBlue :
-                                    item.change_type === 'Pergantian Tipe' ? styles.badgeGreen : styles.badgeOrange)
+                                    item.change_type === 'Pergantian Tingkatan SLS' ? styles.badgeGreen : styles.badgeOrange)
                               }}>
                                 {item.change_type}
                               </span>
@@ -745,7 +745,7 @@ export default function AdminDashboard({ isOpen, onClose, geojson, showToast }) 
                 <option value="Perubahan Batas SLS">Perubahan Batas SLS</option>
                 <option value="Pemekaran SLS">Pemekaran SLS</option>
                 <option value="Penggabungan SLS">Penggabungan SLS</option>
-                <option value="Pergantian Tipe">Pergantian Tipe</option>
+                <option value="Pergantian Tingkatan SLS">Pergantian Tingkatan SLS</option>
               </select>
             </div>
 
@@ -782,7 +782,7 @@ export default function AdminDashboard({ isOpen, onClose, geojson, showToast }) 
                   ...styles.typeBadge,
                   ...(selectedChange.change_type === 'Pemekaran SLS' ? styles.badgeRed :
                       selectedChange.change_type === 'Penggabungan SLS' ? styles.badgeBlue :
-                      selectedChange.change_type === 'Pergantian Tipe' ? styles.badgeGreen : styles.badgeOrange),
+                      selectedChange.change_type === 'Pergantian Tingkatan SLS' ? styles.badgeGreen : styles.badgeOrange),
                   flexShrink: 0,
                 }}>
                   {selectedChange.change_type}

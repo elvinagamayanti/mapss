@@ -185,58 +185,66 @@ body {
 }
 
 @media (max-width: 640px) {
+
+  /* ── Sidebar: bisa scroll penuh sampai tombol paling bawah ── */
   .sidebar-overlay {
     top: 10px !important;
     left: 10px !important;
     right: 10px !important;
     width: auto !important;
     max-height: calc(100vh - 20px) !important;
+    padding-bottom: 20px !important;   /* ruang napas di bawah tombol Laporkan Perubahan */
+    box-sizing: border-box !important;
   }
-  
+
+  /* ── Admin dashboard: tetap card style, tidak full screen ── */
   .admin-fullscreen-overlay {
     padding: 10px !important;
   }
-  
+
   .admin-dashboard-container {
-    height: 98vh !important;
-    border-radius: 16px !important;
+    height: calc(100dvh - 20px) !important;
+    max-height: calc(100dvh - 20px) !important;
+    border-radius: 20px !important;
   }
-  
+
+  /* ── Admin content & stats ── */
   .admin-header {
-    padding: 14px 20px !important;
+    padding: 12px 14px !important;
   }
-  
+
   .admin-content {
-    padding: 14px 20px !important;
-    gap: 14px !important;
+    padding: 12px !important;
+    gap: 12px !important;
   }
-  
+
   .admin-stats-row {
     grid-template-columns: repeat(2, 1fr) !important;
     gap: 8px !important;
   }
-  
+
   .admin-stats-card {
     padding: 8px 10px !important;
     border-radius: 10px !important;
   }
-  
+
   .admin-stats-label {
     font-size: 9px !important;
   }
-  
+
   .admin-stats-value {
     font-size: 16px !important;
   }
-  
+
   .admin-stats-icon {
     display: none !important;
   }
-  
+
+  /* ── Camera ── */
   .camera-overlay {
     padding: 10px !important;
   }
-  
+
   .camera-container {
     height: 95vh !important;
     border-radius: 16px !important;

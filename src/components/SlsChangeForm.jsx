@@ -6,7 +6,7 @@ const CHANGE_TYPES = [
   'Perubahan Batas SLS',
   'Pemekaran SLS',
   'Penggabungan SLS',
-  'Pergantian Tipe'
+  'Pergantian Tingkatan SLS',
 ];
 
 export default function SlsChangeForm({ 
