@@ -84,7 +84,7 @@ try {
             pml_name VARCHAR(150) NOT NULL,
             latitude DOUBLE NOT NULL,
             longitude DOUBLE NOT NULL,
-            change_type VARCHAR(100) NOT NULL, -- 'Perubahan Batas SLS', 'Pemekaran SLS', 'Penggabungan SLS', 'Pergantian Tipe'
+            change_type VARCHAR(100) NOT NULL, -- 'Perubahan Batas SLS', 'Pemekaran SLS', 'Penggabungan SLS', 'Pergantian Tingkatan SLS'
             notes TEXT,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
