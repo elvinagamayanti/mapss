@@ -78,16 +78,20 @@ try {
 
     $conn->exec("
         CREATE TABLE IF NOT EXISTS sls_changes (
-            id INT AUTO_INCREMENT PRIMARY KEY,
-            idsubsls VARCHAR(50) NOT NULL,
-            nmsls VARCHAR(150) NOT NULL,
-            ppl_name VARCHAR(150) NOT NULL,
-            pml_name VARCHAR(150) NOT NULL,
-            latitude DOUBLE NOT NULL,
-            longitude DOUBLE NOT NULL,
-            change_type VARCHAR(100) NOT NULL, -- 'Perubahan Batas SLS', 'Pemekaran SLS', 'Penggabungan SLS', 'Pergantian Tingkatan SLS'
-            notes TEXT,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            id                   INT AUTO_INCREMENT PRIMARY KEY,
+            idsubsls             VARCHAR(50)  NOT NULL,
+            nmsls                VARCHAR(150) NOT NULL,
+            ppl_name             VARCHAR(150) NOT NULL DEFAULT '',
+            pml_name             VARCHAR(150) NOT NULL DEFAULT '',
+            latitude             DOUBLE       NOT NULL DEFAULT 0,
+            longitude            DOUBLE       NOT NULL DEFAULT 0,
+            change_type          VARCHAR(100) NOT NULL,
+            ada_perubahan_batas  VARCHAR(10)  NOT NULL DEFAULT 'tidak' COMMENT 'ya/tidak → kode 1/2 di kolom 25 PSLS',
+            ada_perubahan_nama   VARCHAR(10)  NOT NULL DEFAULT 'tidak' COMMENT 'ya/tidak',
+            nmsls_baru           VARCHAR(150) NOT NULL DEFAULT '' COMMENT 'Nama SLS setelah perubahan (kolom 22 PSLS)',
+            ketua_sls            VARCHAR(150) NOT NULL DEFAULT '' COMMENT 'Nama Ketua SLS terkecil (kolom 23 PSLS)',
+            notes                TEXT,
+            created_at           TIMESTAMP    DEFAULT CURRENT_TIMESTAMP
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
     ");
 

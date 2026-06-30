@@ -10,14 +10,18 @@ if (!$inputData) {
     exit();
 }
 
-$idsubsls = $inputData['idsubsls'] ?? '';
-$nmsls = $inputData['nmsls'] ?? '';
-$ppl_name   = $inputData['ppl_name']  ?? '';  // Nama PPL (Pencacah) dari progressData
-$pml_name   = $inputData['pml_name']  ?? '';  // Nama PML (Pengawas) dari progressData
-$latitude = $inputData['latitude'] ?? null;
-$longitude = $inputData['longitude'] ?? null;
-$change_type = $inputData['change_type'] ?? '';
-$notes = $inputData['notes'] ?? '';
+$idsubsls            = $inputData['idsubsls']            ?? '';
+$nmsls               = $inputData['nmsls']               ?? '';
+$ppl_name            = $inputData['ppl_name']            ?? '';
+$pml_name            = $inputData['pml_name']            ?? '';
+$latitude            = $inputData['latitude']            ?? null;
+$longitude           = $inputData['longitude']           ?? null;
+$change_type         = $inputData['change_type']         ?? '';
+$ada_perubahan_batas = $inputData['ada_perubahan_batas'] ?? 'tidak';
+$ada_perubahan_nama  = $inputData['ada_perubahan_nama']  ?? 'tidak';
+$nmsls_baru          = $inputData['nmsls_baru']          ?? $nmsls;
+$ketua_sls           = $inputData['ketua_sls']           ?? '';
+$notes               = $inputData['notes']               ?? '';
 
 if (empty($idsubsls) || empty($nmsls) || empty($change_type)) {
     http_response_code(400);
@@ -26,32 +30,40 @@ if (empty($idsubsls) || empty($nmsls) || empty($change_type)) {
 }
 
 try {
-    $sql = "INSERT INTO sls_changes (idsubsls, nmsls, ppl_name, pml_name, latitude, longitude, change_type, notes) 
-            VALUES (:idsubsls, :nmsls, :ppl_name, :pml_name, :latitude, :longitude, :change_type, :notes)";
-    
+    $sql = "INSERT INTO sls_changes 
+                (idsubsls, nmsls, ppl_name, pml_name, latitude, longitude,
+                 change_type, ada_perubahan_batas, ada_perubahan_nama,
+                 nmsls_baru, ketua_sls, notes)
+            VALUES 
+                (:idsubsls, :nmsls, :ppl_name, :pml_name, :latitude, :longitude,
+                 :change_type, :ada_perubahan_batas, :ada_perubahan_nama,
+                 :nmsls_baru, :ketua_sls, :notes)";
+
     $stmt = $conn->prepare($sql);
     $stmt->execute([
-        ':idsubsls' => $idsubsls,
-        ':nmsls' => $nmsls,
-        ':ppl_name' => $ppl_name,
-        ':pml_name' => $pml_name,
-        ':latitude' => $latitude,
-        ':longitude' => $longitude,
-        ':change_type' => $change_type,
-        ':notes' => $notes
+        ':idsubsls'            => $idsubsls,
+        ':nmsls'               => $nmsls,
+        ':ppl_name'            => $ppl_name,
+        ':pml_name'            => $pml_name,
+        ':latitude'            => $latitude,
+        ':longitude'           => $longitude,
+        ':change_type'         => $change_type,
+        ':ada_perubahan_batas' => $ada_perubahan_batas,
+        ':ada_perubahan_nama'  => $ada_perubahan_nama,
+        ':nmsls_baru'          => $nmsls_baru,
+        ':ketua_sls'           => $ketua_sls,
+        ':notes'               => $notes,
     ]);
-    
+
     echo json_encode([
-        "status" => "success",
+        "status"  => "success",
         "message" => "Laporan Perubahan SLS berhasil disimpan",
-        "data" => [
-            "id" => $conn->lastInsertId()
-        ]
+        "data"    => ["id" => $conn->lastInsertId()]
     ]);
 } catch (PDOException $e) {
     http_response_code(500);
     echo json_encode([
-        "status" => "error",
+        "status"  => "error",
         "message" => "Gagal menyimpan perubahan ke basis data: " . $e->getMessage()
     ]);
 }

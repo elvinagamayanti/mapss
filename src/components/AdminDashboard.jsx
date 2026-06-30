@@ -32,17 +32,17 @@ function useWindowWidth() {
 }
 
 export default function AdminDashboard({ isOpen, onClose, geojson, showToast }) {
-  const [activeTab, setActiveTab] = useState('photos'); // 'photos' or 'changes'
+  const [activeTab, setActiveTab] = useState('photos');
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [selectedPhoto, setSelectedPhoto] = useState(null); // for zoom modal
+  const [selectedPhoto, setSelectedPhoto] = useState(null);
 
   // Admin edit/delete states
   const [editingPhoto, setEditingPhoto] = useState(null);
   const [editingChange, setEditingChange] = useState(null);
   const [editPhotoCategory, setEditPhotoCategory] = useState('');
-  const [editPhotoDescription, setEditPhotoDescription] = useState(''); // ← BARU
+  const [editPhotoDescription, setEditPhotoDescription] = useState('');
   const [editChangeType, setEditChangeType] = useState('');
   const [editChangeNotes, setEditChangeNotes] = useState('');
   const [adminPassword, setAdminPassword] = useState('');
@@ -57,7 +57,7 @@ export default function AdminDashboard({ isOpen, onClose, geojson, showToast }) 
   const [categoryFilter, setCategoryFilter] = useState('All');
   const [desaFilter, setDesaFilter] = useState('All');
 
-  // Detail modal for change items (mobile)
+  // Detail modal for change items (semua platform)
   const [selectedChange, setSelectedChange] = useState(null);
 
   // Responsive flag
@@ -161,7 +161,7 @@ export default function AdminDashboard({ isOpen, onClose, geojson, showToast }) 
     }
   };
 
-  // Handle photo save edit — sekarang menyertakan description
+  // Handle photo save edit
   const handleSavePhotoEdit = async () => {
     if (!editingPhoto || !editPhotoCategory) return;
 
@@ -175,7 +175,7 @@ export default function AdminDashboard({ isOpen, onClose, geojson, showToast }) 
         body: JSON.stringify({ 
           id: editingPhoto.id, 
           category: editPhotoCategory,
-          description: editPhotoDescription, // ← BARU
+          description: editPhotoDescription,
           password: adminPassword
         })
       });
@@ -296,8 +296,7 @@ export default function AdminDashboard({ isOpen, onClose, geojson, showToast }) 
 
   const getApiUrl = (relativePath) => {
     const apiBaseUrl = localStorage.getItem('maps_api_url') || 'api';
-    const cleanPath = relativePath.startsWith('api/') ?
-      relativePath.replace('api/', '') : relativePath;
+    const cleanPath = relativePath.startsWith('api/') ? relativePath.replace('api/', '') : relativePath;
     return `${apiBaseUrl}/${cleanPath}`;
   };
 
@@ -450,7 +449,6 @@ export default function AdminDashboard({ isOpen, onClose, geojson, showToast }) 
                       {filteredPhotos.map((photo) => (
                         <GlassPanel key={photo.id} style={{
                           ...styles.photoCard,
-                          // Tinggi dinamis karena ada deskripsi
                           height: photo.description ? 'auto' : '290px',
                           minHeight: '290px',
                         }}>
@@ -482,7 +480,6 @@ export default function AdminDashboard({ isOpen, onClose, geojson, showToast }) 
                                 <span style={styles.photoCode}>{photo.idsubsls.substring(10, 14)}</span>
                               </div>
 
-                              {/* ── BARU: Deskripsi Foto ── */}
                               {photo.description ? (
                                 <div style={styles.photoDescriptionBox}>
                                   <StickyNote size={11} style={{ marginRight: 5, flexShrink: 0, marginTop: 1 }} />
@@ -498,7 +495,7 @@ export default function AdminDashboard({ isOpen, onClose, geojson, showToast }) 
                                   onClick={() => {
                                     setEditingPhoto(photo);
                                     setEditPhotoCategory(photo.category);
-                                    setEditPhotoDescription(photo.description || ''); // ← BARU
+                                    setEditPhotoDescription(photo.description || '');
                                   }}
                                   style={styles.photoAdminBtn}
                                 >
@@ -561,11 +558,8 @@ export default function AdminDashboard({ isOpen, onClose, geojson, showToast }) 
                         {data.changes.map((item) => (
                           <tr
                             key={item.id}
-                            style={{
-                              ...styles.tr,
-                              ...(isMobile ? { cursor: 'pointer' } : {})
-                            }}
-                            onClick={isMobile ? () => setSelectedChange(item) : undefined}
+                            style={{ ...styles.tr, cursor: 'pointer' }}
+                            onClick={() => setSelectedChange(item)}
                           >
                             <td style={styles.td}>
                               <div style={styles.slsCell}>
@@ -576,9 +570,10 @@ export default function AdminDashboard({ isOpen, onClose, geojson, showToast }) 
                             <td style={styles.td}>
                               <span style={{
                                 ...styles.typeBadge,
-                                ...(item.change_type === 'Pemekaran SLS' ? styles.badgeRed :
-                                    item.change_type === 'Penggabungan SLS' ? styles.badgeBlue :
-                                    item.change_type === 'Pergantian Tingkatan SLS' ? styles.badgeGreen : styles.badgeOrange)
+                                ...(item.change_type === 'Pemekaran SLS'           ? styles.badgeRed :
+                                    item.change_type === 'Penggabungan SLS'        ? styles.badgeBlue :
+                                    item.change_type === 'Perubahan Tingkatan SLS' ? styles.badgeGreen
+                                                                                   : styles.badgeOrange)
                               }}>
                                 {item.change_type}
                               </span>
@@ -598,25 +593,18 @@ export default function AdminDashboard({ isOpen, onClose, geojson, showToast }) 
                               <td style={styles.td}>
                                 <div style={styles.coordLink}>
                                   <MapPin size={12} style={{ marginRight: 4, color: 'hsl(var(--color-primary))' }} />
-                                  <span>{item.latitude.toFixed(5)}, {item.longitude.toFixed(5)}</span>
+                                  <span>{Number(item.latitude).toFixed(5)}, {Number(item.longitude).toFixed(5)}</span>
                                 </div>
                               </td>
                             )}
                             <td style={styles.td}>
-                              {isMobile ? (
-                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '6px' }}>
-                                  <div style={styles.dateCell}>
-                                    <Calendar size={12} style={{ marginRight: 4, color: '#888' }} />
-                                    <span>{formatDate(item.created_at)}</span>
-                                  </div>
-                                  <ChevronRight size={14} color="hsl(var(--color-gray-text))" style={{ flexShrink: 0 }} />
-                                </div>
-                              ) : (
+                              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '6px' }}>
                                 <div style={styles.dateCell}>
                                   <Calendar size={12} style={{ marginRight: 4, color: '#888' }} />
                                   <span>{formatDate(item.created_at)}</span>
                                 </div>
-                              )}
+                                <ChevronRight size={14} color="hsl(var(--color-gray-text))" style={{ flexShrink: 0 }} />
+                              </div>
                             </td>
                             {isAdminAuthenticated && (
                               <td style={styles.td}>
@@ -658,7 +646,7 @@ export default function AdminDashboard({ isOpen, onClose, geojson, showToast }) 
         )}
       </GlassPanel>
 
-      {/* CUTE ADMIN AUTH MODAL */}
+      {/* ADMIN AUTH MODAL */}
       {showAuthModal && (
         <div style={styles.editDialogOverlay}>
           <GlassPanel style={styles.authDialogContainer} className="animate-fade-in">
@@ -669,40 +657,20 @@ export default function AdminDashboard({ isOpen, onClose, geojson, showToast }) 
             <p style={{ fontSize: '12px', color: 'hsl(var(--color-gray-text))', marginTop: '-8px' }}>
               Masukkan password untuk mengaktifkan fitur edit dan hapus.
             </p>
-            
-            <div style={styles.formGroup}>
-              <label style={styles.formLabel}>Password Admin</label>
-              <input 
-                type="password" 
-                value={authPassword} 
-                onChange={(e) => {
-                  setAuthPassword(e.target.value);
-                  setAuthError('');
-                }}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') handleAuthSubmit();
-                }}
-                placeholder="••••••••"
-                style={styles.selectInput}
-                autoFocus
-              />
-              {authError && (
-                <span style={{ color: '#ff3b30', fontSize: '11px', fontWeight: 500, marginTop: '2px' }}>
-                  ❌ {authError}
-                </span>
-              )}
-            </div>
-            
+            <input
+              type="password"
+              className="input-glass"
+              placeholder="Password admin..."
+              value={authPassword}
+              onChange={(e) => setAuthPassword(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && handleAuthSubmit()}
+              autoFocus
+            />
+            {authError && (
+              <p style={{ fontSize: '12px', color: '#ff3b30', marginTop: '-8px' }}>{authError}</p>
+            )}
             <div style={styles.dialogActions}>
-              <button 
-                onClick={() => {
-                  setShowAuthModal(false);
-                  setAuthPassword('');
-                  setAuthError('');
-                }} 
-                className="btn-secondary" 
-                style={styles.dialogBtn}
-              >
+              <button onClick={() => { setShowAuthModal(false); setAuthError(''); }} className="btn-secondary" style={styles.dialogBtn}>
                 Batal
               </button>
               <button onClick={handleAuthSubmit} className="btn-primary" style={styles.dialogBtn}>
@@ -713,15 +681,15 @@ export default function AdminDashboard({ isOpen, onClose, geojson, showToast }) 
         </div>
       )}
 
-      {/* EDIT PHOTO MODAL — sekarang ada field deskripsi */}
+      {/* EDIT PHOTO MODAL */}
       {editingPhoto && (
         <div style={styles.editDialogOverlay}>
-          <GlassPanel style={styles.editDialogContainer}>
+          <GlassPanel style={styles.editDialogContainer} className="animate-fade-in">
             <h3 style={styles.editDialogTitle}>Edit Data Foto</h3>
             <p style={styles.editDialogSub}>{editingPhoto.nmsls}</p>
             
             <div style={styles.formGroup}>
-              <label style={styles.formLabel}>Kategori</label>
+              <label style={styles.formLabel}>Kategori Foto</label>
               <select 
                 value={editPhotoCategory} 
                 onChange={(e) => setEditPhotoCategory(e.target.value)}
@@ -733,7 +701,6 @@ export default function AdminDashboard({ isOpen, onClose, geojson, showToast }) 
               </select>
             </div>
 
-            {/* ── BARU: Field Deskripsi di Modal Edit ── */}
             <div style={styles.formGroup}>
               <label style={styles.formLabel}>Deskripsi Foto</label>
               <textarea
@@ -766,7 +733,7 @@ export default function AdminDashboard({ isOpen, onClose, geojson, showToast }) 
       {/* EDIT CHANGE REPORT MODAL */}
       {editingChange && (
         <div style={styles.editDialogOverlay}>
-          <GlassPanel style={styles.editDialogContainer}>
+          <GlassPanel style={styles.editDialogContainer} className="animate-fade-in">
             <h3 style={styles.editDialogTitle}>Edit Laporan Perubahan</h3>
             <p style={styles.editDialogSub}>{editingChange.nmsls}</p>
             
@@ -777,10 +744,9 @@ export default function AdminDashboard({ isOpen, onClose, geojson, showToast }) 
                 onChange={(e) => setEditChangeType(e.target.value)}
                 style={styles.selectInput}
               >
-                <option value="Perubahan Batas SLS">Perubahan Batas SLS</option>
-                <option value="Pemekaran SLS">Pemekaran SLS</option>
-                <option value="Penggabungan SLS">Penggabungan SLS</option>
-                <option value="Pergantian Tingkatan SLS">Pergantian Tingkatan SLS</option>
+                <option value="Pemekaran SLS">1 - Pemekaran SLS</option>
+                <option value="Penggabungan SLS">2 - Penggabungan SLS</option>
+                <option value="Perubahan Tingkatan SLS">4 - Perubahan Tingkatan SLS</option>
               </select>
             </div>
 
@@ -807,16 +773,22 @@ export default function AdminDashboard({ isOpen, onClose, geojson, showToast }) 
         </div>
       )}
 
-      {/* MOBILE: Change Detail Modal */}
+      {/* CHANGE DETAIL MODAL – semua platform, klik row */}
       {selectedChange && (
         <div style={styles.editDialogOverlay} onClick={() => setSelectedChange(null)}>
-          <GlassPanel style={styles.changeDetailContainer} onClick={(e) => e.stopPropagation()} className="animate-fade-in">
+          <GlassPanel
+            style={styles.changeDetailContainer}
+            onClick={(e) => e.stopPropagation()}
+            className="animate-fade-in"
+          >
+            {/* Header: badge tipe + tombol tutup */}
             <div style={styles.changeDetailHeader}>
               <span style={{
                 ...styles.typeBadge,
-                ...(selectedChange.change_type === 'Pemekaran SLS' ? styles.badgeRed :
-                    selectedChange.change_type === 'Penggabungan SLS' ? styles.badgeBlue :
-                    selectedChange.change_type === 'Pergantian Tingkatan SLS' ? styles.badgeGreen : styles.badgeOrange)
+                ...(selectedChange.change_type === 'Pemekaran SLS'           ? styles.badgeRed :
+                    selectedChange.change_type === 'Penggabungan SLS'        ? styles.badgeBlue :
+                    selectedChange.change_type === 'Perubahan Tingkatan SLS' ? styles.badgeGreen
+                                                                             : styles.badgeOrange)
               }}>
                 {selectedChange.change_type}
               </span>
@@ -825,12 +797,49 @@ export default function AdminDashboard({ isOpen, onClose, geojson, showToast }) 
               </button>
             </div>
 
+            {/* SLS Sebelum Perubahan */}
             <div style={styles.changeDetailSection}>
-              <span style={styles.changeDetailSectionLabel}>SLS / Sub-SLS</span>
+              <span style={styles.changeDetailSectionLabel}>SLS Sebelum Perubahan</span>
               <span style={styles.slsCellName}>{selectedChange.nmsls}</span>
               <span style={styles.slsCellCode}>{selectedChange.idsubsls}</span>
             </div>
 
+            {/* SLS Setelah Perubahan */}
+            <div style={styles.changeDetailSection}>
+              <span style={styles.changeDetailSectionLabel}>SLS Setelah Perubahan</span>
+              <span style={styles.slsCellName}>
+                {selectedChange.nmsls_baru && selectedChange.nmsls_baru !== selectedChange.nmsls
+                  ? selectedChange.nmsls_baru
+                  : selectedChange.nmsls}
+              </span>
+              {selectedChange.ada_perubahan_nama === 'ya' && (
+                <span style={{ fontSize: '11px', color: 'hsl(var(--color-primary))', marginTop: '2px' }}>
+                  ✎ Ada perubahan nama SLS
+                </span>
+              )}
+            </div>
+
+            {/* Ketua SLS + Perubahan Batas */}
+            <div style={styles.changeDetailRow}>
+              <div style={{ ...styles.changeDetailSection, flex: 1 }}>
+                <span style={styles.changeDetailSectionLabel}>Ketua SLS (Terkecil)</span>
+                <span style={{ fontSize: '13px', fontWeight: 600, color: 'hsl(var(--color-dark))' }}>
+                  {selectedChange.ketua_sls || <span style={{ color: '#aaa', fontWeight: 400 }}>—</span>}
+                </span>
+              </div>
+              <div style={{ ...styles.changeDetailSection, flex: 1 }}>
+                <span style={styles.changeDetailSectionLabel}>Perubahan Batas?</span>
+                <span style={{
+                  fontSize: '13px',
+                  fontWeight: 600,
+                  color: selectedChange.ada_perubahan_batas === 'ya' ? '#e65100' : '#2b8a3e',
+                }}>
+                  {selectedChange.ada_perubahan_batas === 'ya' ? '1 - Ya' : '2 - Tidak'}
+                </span>
+              </div>
+            </div>
+
+            {/* Catatan */}
             {selectedChange.notes ? (
               <div style={styles.changeDetailSection}>
                 <span style={styles.changeDetailSectionLabel}>Catatan / Deskripsi</span>
@@ -842,29 +851,33 @@ export default function AdminDashboard({ isOpen, onClose, geojson, showToast }) 
             <div style={styles.changeDetailRow}>
               <div style={{ ...styles.changeDetailSection, flex: 1 }}>
                 <span style={styles.changeDetailSectionLabel}>PPL (Pencacah)</span>
-                <span style={styles.petugasCellName}>{selectedChange.ppl_name || <span style={styles.petugasEmpty}>—</span>}</span>
+                <span style={styles.petugasCellName}>
+                  {selectedChange.ppl_name || <span style={styles.petugasEmpty}>—</span>}
+                </span>
               </div>
               <div style={{ ...styles.changeDetailSection, flex: 1 }}>
                 <span style={styles.changeDetailSectionLabel}>PML (Pengawas)</span>
-                <span style={styles.petugasCellName}>{selectedChange.pml_name || <span style={styles.petugasEmpty}>—</span>}</span>
+                <span style={styles.petugasCellName}>
+                  {selectedChange.pml_name || <span style={styles.petugasEmpty}>—</span>}
+                </span>
               </div>
             </div>
 
-            {/* Koordinat */}
-            <div style={styles.changeDetailSection}>
-              <span style={styles.changeDetailSectionLabel}>Geotag Lokasi</span>
-              <div style={styles.coordLink}>
-                <MapPin size={13} style={{ marginRight: 5, color: 'hsl(var(--color-primary))', flexShrink: 0 }} />
-                <span>{selectedChange.latitude.toFixed(6)}, {selectedChange.longitude.toFixed(6)}</span>
+            {/* Tanggal + Geotag */}
+            <div style={styles.changeDetailRow}>
+              <div style={{ ...styles.changeDetailSection, flex: 1 }}>
+                <span style={styles.changeDetailSectionLabel}>Tanggal Lapor</span>
+                <div style={styles.dateCell}>
+                  <Calendar size={13} style={{ marginRight: 5, color: '#888' }} />
+                  <span>{formatDate(selectedChange.created_at)}</span>
+                </div>
               </div>
-            </div>
-
-            {/* Tanggal */}
-            <div style={styles.changeDetailSection}>
-              <span style={styles.changeDetailSectionLabel}>Tanggal Lapor</span>
-              <div style={styles.dateCell}>
-                <Calendar size={13} style={{ marginRight: 5, color: '#888' }} />
-                <span>{formatDate(selectedChange.created_at)}</span>
+              <div style={{ ...styles.changeDetailSection, flex: 1 }}>
+                <span style={styles.changeDetailSectionLabel}>Geotag Lokasi</span>
+                <div style={styles.coordLink}>
+                  <MapPin size={12} style={{ marginRight: 4, color: 'hsl(var(--color-primary))' }} />
+                  <span>{Number(selectedChange.latitude).toFixed(5)}, {Number(selectedChange.longitude).toFixed(5)}</span>
+                </div>
               </div>
             </div>
 
@@ -878,16 +891,24 @@ export default function AdminDashboard({ isOpen, onClose, geojson, showToast }) 
                     setEditChangeType(selectedChange.change_type);
                     setEditChangeNotes(selectedChange.notes || '');
                   }}
-                  style={{ ...styles.tableAdminBtn, flex: 1, padding: '10px', fontSize: '13px', textAlign: 'center' }}
+                  style={{ ...styles.tableAdminBtn, flex: 1, justifyContent: 'center', padding: '9px', fontSize: '13px' }}
                 >
                   Edit
                 </button>
                 <button
                   onClick={() => {
-                    setSelectedChange(null);
                     handleDeleteChange(selectedChange.id);
+                    setSelectedChange(null);
                   }}
-                  style={{ ...styles.tableAdminBtn, flex: 1, padding: '10px', fontSize: '13px', textAlign: 'center', color: '#ff3b30', backgroundColor: 'rgba(255,59,48,0.08)' }}
+                  style={{
+                    ...styles.tableAdminBtn,
+                    flex: 1,
+                    justifyContent: 'center',
+                    padding: '9px',
+                    fontSize: '13px',
+                    color: '#ff3b30',
+                    backgroundColor: 'rgba(255,59,48,0.08)',
+                  }}
                 >
                   Hapus
                 </button>
@@ -911,7 +932,6 @@ export default function AdminDashboard({ isOpen, onClose, geojson, showToast }) 
             />
             <div style={styles.zoomFooter}>
               <h4 style={styles.zoomTitle}>{selectedPhoto.nmsls}</h4>
-              {/* ── BARU: Tampilkan deskripsi juga di zoom modal ── */}
               {selectedPhoto.description && (
                 <p style={{ ...styles.zoomText, fontSize: '13px', color: '#dddddd', marginTop: '6px', marginBottom: '4px', fontStyle: 'italic' }}>
                   "{selectedPhoto.description}"
@@ -1172,7 +1192,6 @@ const styles = {
     color: '#777',
     marginTop: '2px',
   },
-  // ── BARU: Style deskripsi foto di card ──
   photoDescriptionBox: {
     display: 'flex',
     alignItems: 'flex-start',
@@ -1195,6 +1214,24 @@ const styles = {
     WebkitLineClamp: 3,
     WebkitBoxOrient: 'vertical',
     overflow: 'hidden',
+  },
+  photoAdminActions: {
+    display: 'flex',
+    gap: '8px',
+    marginTop: '6px',
+    borderTop: '1px solid rgba(0,0,0,0.04)',
+    paddingTop: '8px',
+  },
+  photoAdminBtn: {
+    flex: 1,
+    padding: '6px',
+    fontSize: '12px',
+    borderRadius: '8px',
+    border: '1px solid rgba(0,0,0,0.08)',
+    backgroundColor: 'rgba(0,0,0,0.03)',
+    cursor: 'pointer',
+    fontWeight: 500,
+    color: 'hsl(var(--color-dark))',
   },
   photoFooter: {
     display: 'flex',
@@ -1297,7 +1334,6 @@ const styles = {
     display: 'inline-block',
     textAlign: 'center',
   },
-  // Color Badges
   badgeRed: {
     backgroundColor: 'rgba(255, 59, 48, 0.08)',
     color: '#ff3b30',
@@ -1318,6 +1354,16 @@ const styles = {
     backgroundColor: 'rgba(142, 142, 147, 0.08)',
     color: '#8e8e93',
   },
+  tableAdminBtn: {
+    padding: '5px 10px',
+    fontSize: '12px',
+    borderRadius: '7px',
+    border: '1px solid rgba(0,0,0,0.08)',
+    backgroundColor: 'rgba(0,0,0,0.03)',
+    cursor: 'pointer',
+    fontWeight: 500,
+    color: 'hsl(var(--color-dark))',
+  },
   emptyState: {
     padding: '40px',
     textAlign: 'center',
@@ -1325,105 +1371,21 @@ const styles = {
     fontStyle: 'italic',
     fontSize: '14px',
   },
-  // Zoom overlay styles
-  zoomOverlay: {
-    position: 'fixed',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: 'rgba(0,0,0,0.85)',
-    zIndex: 3500,
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  zoomContainer: {
-    position: 'relative',
-    maxWidth: '90%',
-    maxHeight: '85%',
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-  },
-  zoomImage: {
-    maxWidth: '100%',
-    maxHeight: '80vh',
-    objectFit: 'contain',
-    borderRadius: '12px',
-    boxShadow: '0 8px 32px rgba(0,0,0,0.3)',
-  },
-  zoomCloseBtn: {
-    position: 'absolute',
-    top: '-40px',
-    right: '0px',
-    background: 'none',
-    border: 'none',
-    color: '#ffffff',
-    cursor: 'pointer',
-  },
-  zoomFooter: {
-    marginTop: '16px',
-    color: '#ffffff',
-    textAlign: 'center',
-  },
-  zoomTitle: {
-    fontSize: '16px',
-    fontWeight: 600,
-    marginBottom: '4px',
-  },
-  zoomText: {
-    fontSize: '12px',
-    color: '#aaaaaa',
-  },
-  photoAdminActions: {
-    display: 'flex',
-    gap: '8px',
-    marginTop: '6px',
-    borderTop: '1px solid rgba(0,0,0,0.04)',
-    paddingTop: '6px',
-  },
-  photoAdminBtn: {
-    flex: 1,
-    padding: '6px 8px',
-    fontSize: '11px',
-    fontWeight: 600,
-    borderRadius: '6px',
-    border: 'none',
-    backgroundColor: 'rgba(0,100,255,0.08)',
-    color: '#0064ff',
-    cursor: 'pointer',
-    textAlign: 'center',
-    transition: 'all 0.2s',
-  },
-  tableAdminBtn: {
-    padding: '4px 10px',
-    fontSize: '11px',
-    fontWeight: 600,
-    borderRadius: '6px',
-    border: 'none',
-    backgroundColor: 'rgba(0,100,255,0.08)',
-    color: '#0064ff',
-    cursor: 'pointer',
-    transition: 'all 0.2s',
-  },
+  // Edit/Auth dialog overlay
   editDialogOverlay: {
     position: 'fixed',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: 'rgba(0,0,0,0.4)',
-    backdropFilter: 'blur(10px)',
+    inset: 0,
+    backgroundColor: 'rgba(0,0,0,0.3)',
+    backdropFilter: 'blur(8px)',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    zIndex: 4000,
+    zIndex: 3000,
     padding: '20px',
   },
   editDialogContainer: {
     width: '100%',
-    maxWidth: '400px',
+    maxWidth: '420px',
     padding: '24px',
     display: 'flex',
     flexDirection: 'column',
@@ -1431,15 +1393,16 @@ const styles = {
     border: '1px solid rgba(255,255,255,0.6)',
   },
   editDialogTitle: {
-    fontSize: '18px',
+    fontSize: '16px',
     fontWeight: 700,
     color: 'hsl(var(--color-dark))',
+    margin: 0,
   },
   editDialogSub: {
-    fontSize: '13px',
+    fontSize: '12px',
     color: 'hsl(var(--color-gray-text))',
-    fontWeight: 500,
-    marginTop: '-8px',
+    margin: '-8px 0 0 0',
+    fontStyle: 'italic',
   },
   formGroup: {
     display: 'flex',
@@ -1453,35 +1416,38 @@ const styles = {
     textTransform: 'uppercase',
   },
   selectInput: {
-    padding: '10px 12px',
+    width: '100%',
+    padding: '10px 14px',
     borderRadius: '10px',
-    border: '1px solid rgba(0,0,0,0.1)',
-    backgroundColor: '#ffffff',
-    fontSize: '14px',
-    fontFamily: 'inherit',
+    border: '1px solid rgba(255,255,255,0.4)',
+    background: 'rgba(255,255,255,0.5)',
+    fontFamily: 'var(--font-sans)',
+    fontSize: '13px',
     outline: 'none',
   },
   textareaInput: {
-    padding: '10px 12px',
+    width: '100%',
+    padding: '10px 14px',
     borderRadius: '10px',
-    border: '1px solid rgba(0,0,0,0.1)',
-    backgroundColor: '#ffffff',
-    fontSize: '14px',
-    fontFamily: 'inherit',
-    outline: 'none',
-    resize: 'vertical',
-  },
-  // ── BARU: Style textarea deskripsi di modal edit foto ──
-  editDescriptionTextarea: {
-    padding: '10px 12px',
-    borderRadius: '10px',
-    border: '1.5px solid rgba(0,0,0,0.1)',
-    backgroundColor: '#ffffff',
+    border: '1px solid rgba(255,255,255,0.4)',
+    background: 'rgba(255,255,255,0.5)',
+    fontFamily: 'var(--font-sans)',
     fontSize: '13px',
-    fontFamily: 'inherit',
     outline: 'none',
-    resize: 'vertical',
-    minHeight: '72px',
+    resize: 'none',
+    lineHeight: '1.5',
+    boxSizing: 'border-box',
+  },
+  editDescriptionTextarea: {
+    width: '100%',
+    padding: '10px 14px',
+    borderRadius: '10px',
+    border: '1px solid rgba(255,255,255,0.4)',
+    background: 'rgba(255,255,255,0.5)',
+    fontFamily: 'var(--font-sans)',
+    fontSize: '13px',
+    outline: 'none',
+    resize: 'none',
     lineHeight: '1.5',
     boxSizing: 'border-box',
     width: '100%',
@@ -1547,14 +1513,14 @@ const styles = {
     alignItems: 'center',
     marginBottom: '4px',
   },
-  // Change detail modal styles
+  // Change detail modal
   changeDetailContainer: {
     width: '100%',
-    maxWidth: '420px',
+    maxWidth: '460px',
     padding: '20px',
     display: 'flex',
     flexDirection: 'column',
-    gap: '14px',
+    gap: '12px',
     border: '1px solid rgba(255,255,255,0.6)',
   },
   changeDetailHeader: {
@@ -1589,5 +1555,56 @@ const styles = {
     color: 'hsl(var(--color-dark))',
     lineHeight: '1.5',
     margin: 0,
+  },
+  // Zoom overlay
+  zoomOverlay: {
+    position: 'fixed',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0,0,0,0.85)',
+    zIndex: 3500,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  zoomContainer: {
+    position: 'relative',
+    maxWidth: '90%',
+    maxHeight: '85%',
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+  },
+  zoomImage: {
+    maxWidth: '100%',
+    maxHeight: '80vh',
+    objectFit: 'contain',
+    borderRadius: '12px',
+    boxShadow: '0 8px 32px rgba(0,0,0,0.3)',
+  },
+  zoomCloseBtn: {
+    position: 'absolute',
+    top: '-40px',
+    right: '0px',
+    background: 'none',
+    border: 'none',
+    color: '#ffffff',
+    cursor: 'pointer',
+  },
+  zoomFooter: {
+    marginTop: '16px',
+    color: '#ffffff',
+    textAlign: 'center',
+  },
+  zoomTitle: {
+    fontSize: '16px',
+    fontWeight: 600,
+    marginBottom: '4px',
+  },
+  zoomText: {
+    fontSize: '12px',
+    color: '#aaaaaa',
   },
 };
